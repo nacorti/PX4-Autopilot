@@ -275,20 +275,16 @@ rtps:
     id: 131
   - msg: yaw_estimator_status
     id: 132
-  - msg: sensor_gyro_fft
-    id: 136
-  - msg: navigator_mission_item
-    id: 137
-  - msg: estimator_optical_flow_vel
-    id: 138
-  - msg: estimator_selector_status
-    id: 139
   - msg: vehicle_angular_acceleration_setpoint
     id: 133
   - msg: vehicle_torque_setpoint
     id: 134
   - msg: vehicle_thrust_setpoint
     id: 135
+  - msg: estimator_optical_flow_vel
+    id: 138
+  - msg: estimator_selector_status
+    id: 139
   - msg: vehicle_actuator_setpoint
     id: 136
   - msg: control_allocator_status

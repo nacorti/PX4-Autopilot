@@ -275,14 +275,12 @@ rtps:
     id: 131
   - msg: yaw_estimator_status
     id: 132
-  - msg: sensor_preflight_mag
+  - msg: vehicle_angular_acceleration_setpoint
     id: 133
-  - msg: estimator_states
+  - msg: vehicle_torque_setpoint
     id: 134
-  - msg: generator_status
+  - msg: vehicle_thrust_setpoint
     id: 135
-  - msg: sensor_gyro_fft
-    id: 136
   - msg: navigator_mission_item
     id: 137
   - msg: estimator_optical_flow_vel

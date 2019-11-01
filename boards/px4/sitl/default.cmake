@@ -29,6 +29,7 @@ px4_add_board(
 		attitude_estimator_q
 		camera_feedback
 		commander
+		control_allocator
 		dataman
 		ekf2
 		events

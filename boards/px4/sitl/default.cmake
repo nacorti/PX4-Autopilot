@@ -26,6 +26,7 @@ px4_add_board(
 	MODULES
 		airship_att_control
 		airspeed_selector
+		angular_velocity_controller
 		attitude_estimator_q
 		camera_feedback
 		commander

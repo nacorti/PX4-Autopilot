@@ -27,4 +27,5 @@ then
 fi
 
 # set MIXER quad_w
-set MIXER quad
+set MIXER direct
+

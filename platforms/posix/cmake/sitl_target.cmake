@@ -92,8 +92,8 @@ ExternalProject_Add(jsbsim_bridge
 set(viewers none jmavsim gazebo)
 set(debuggers none ide gdb lldb ddd valgrind callgrind)
 set(models none shell
-	if750a iris iris_dual_gps iris_opt_flow iris_opt_flow_mockup iris_vision iris_rplidar iris_irlock iris_obs_avoid iris_rtps px4vision solo typhoon_h480
 	plane plane_cam plane_catapult plane_lidar techpod
+	if750a iris iris_dual_gps iris_opt_flow iris_opt_flow_mockup iris_vision iris_rplidar iris_irlock iris_obs_avoid iris_rtps iris_ctrlalloc px4vision solo typhoon_h480 typhoon_ctrlalloc
 	standard_vtol tailsitter tiltrotor
 	rover r1_rover boat cloudship
 	uuv_hippocampus uuv_bluerov2_heavy)

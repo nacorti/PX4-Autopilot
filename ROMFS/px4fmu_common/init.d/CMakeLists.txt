@@ -54,5 +54,5 @@ px4_add_romfs_files(
 	rc.vehicle_setup
 	rc.vtol_apps
 	rc.vtol_defaults
-	rc.new_apps
+	rc.ctrlalloc
 )

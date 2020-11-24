@@ -114,8 +114,7 @@ public:
 
 private:
 
-	transition_result_t arm_disarm(bool arm, bool run_preflight_checks, orb_advert_t *mavlink_log_pub,
-				       arm_disarm_reason_t calling_reason);
+	transition_result_t arm_disarm(bool arm, arm_disarm_reason_t calling_reason, bool run_preflight_checks = true);
 
 	void battery_status_check();
 
@@ -123,8 +122,8 @@ private:
 			 bool *changed);
 
 	bool check_posvel_validity(const bool data_valid, const float data_accuracy, const float required_accuracy,
-				   const hrt_abstime &data_timestamp_us, hrt_abstime *last_fail_time_us, hrt_abstime *probation_time_us, bool *valid_state,
-				   bool *validity_changed);
+				   const hrt_abstime &data_timestamp_us, hrt_abstime *last_fail_time_us, hrt_abstime *probation_time_us, bool &valid_state,
+				   bool &validity_changed);
 
 	void control_status_leds(vehicle_status_s *status_local, const actuator_armed_s *actuator_armed, bool changed,
 				 const uint8_t battery_warning);
@@ -152,7 +151,7 @@ private:
 	void print_reject_arm(const char *msg);
 	void print_reject_mode(const char *msg);
 
-	void reset_posvel_validity(bool *changed);
+	void reset_posvel_validity();
 
 	bool set_home_position();
 	bool set_home_position_alt_only();
@@ -161,13 +160,10 @@ private:
 	void update_control_mode();
 
 	// Set the main system state based on RC and override device inputs
-	transition_result_t set_main_state(const vehicle_status_s &status, bool *changed);
-
-	// Enable override (manual reversion mode) on the system
-	transition_result_t set_main_state_override_on(const vehicle_status_s &status, bool *changed);
+	transition_result_t set_main_state(const vehicle_status_s &status);
 
 	// Set the system main state based on the current RC inputs
-	transition_result_t set_main_state_rc(const vehicle_status_s &status, bool *changed);
+	transition_result_t set_main_state_rc(const vehicle_status_s &status);
 
 	bool shutdown_if_allowed();
 
@@ -373,12 +369,13 @@ private:
 
 	main_state_t	_main_state_pre_offboard{commander_state_s::MAIN_STATE_MANUAL};
 
-	commander_state_s	_internal_state{};
-	cpuload_s		_cpuload{};
-	geofence_result_s	_geofence_result{};
-	vehicle_land_detected_s	_land_detector{};
-	safety_s		_safety{};
-	vtol_vehicle_status_s	_vtol_status{};
+	commander_state_s       _internal_state{};
+	cpuload_s               _cpuload{};
+	geofence_result_s	 _geofence_result{};
+	vehicle_land_detected_s _land_detector{};
+	safety_s                _safety{};
+	vehicle_control_mode_s  _vehicle_control_mode{};
+	vtol_vehicle_status_s   _vtol_status{};
 
 	// Subscriptions
 	uORB::Subscription					_actuator_controls_sub{ORB_ID_VEHICLE_ATTITUDE_CONTROLS};
@@ -407,7 +404,7 @@ private:
 	uORB::SubscriptionData<airspeed_s>			_airspeed_sub{ORB_ID(airspeed)};
 	uORB::SubscriptionData<estimator_status_s>		_estimator_status_sub{ORB_ID(estimator_status)};
 	uORB::SubscriptionData<mission_result_s>		_mission_result_sub{ORB_ID(mission_result)};
-	uORB::SubscriptionData<offboard_control_mode_s>		_offboard_control_mode_sub{ORB_ID(offboard_control_mode)};
+	uORB::SubscriptionData<offboard_control_mode_s>	_offboard_control_mode_sub{ORB_ID(offboard_control_mode)};
 	uORB::SubscriptionData<vehicle_global_position_s>	_global_position_sub{ORB_ID(vehicle_global_position)};
 	uORB::SubscriptionData<vehicle_local_position_s>	_local_position_sub{ORB_ID(vehicle_local_position)};
 

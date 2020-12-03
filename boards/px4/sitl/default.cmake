@@ -26,9 +26,11 @@ px4_add_board(
 	MODULES
 		airship_att_control
 		airspeed_selector
+		angular_velocity_controller
 		attitude_estimator_q
 		camera_feedback
 		commander
+		control_allocator
 		dataman
 		ekf2
 		events
@@ -41,7 +43,7 @@ px4_add_board(
 		logger
 		mavlink
 		mc_att_control
-		mc_hover_thrust_estimator
+		#mc_hover_thrust_estimator
 		mc_pos_control
 		mc_rate_control
 		#micrortps_bridge

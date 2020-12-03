@@ -45,6 +45,7 @@
 #include <ActuatorEffectivenessMultirotor.hpp>
 #include <ActuatorEffectivenessStandardVTOL.hpp>
 #include <ActuatorEffectivenessTiltrotorVTOL.hpp>
+#include <ActuatorEffectivenessCompoundVTOL.hpp>
 
 #include <ControlAllocation.hpp>
 #include <ControlAllocationPseudoInverse.hpp>
@@ -125,6 +126,7 @@ private:
 		MULTIROTOR = 0,
 		STANDARD_VTOL = 1,
 		TILTROTOR_VTOL = 2,
+		COMPOUND_VTOL = 3,
 	};
 
 	EffectivenessSource _effectiveness_source_id{EffectivenessSource::NONE};

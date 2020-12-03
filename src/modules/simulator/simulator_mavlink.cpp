@@ -86,8 +86,17 @@ void Simulator::actuator_controls_from_outputs(mavlink_hil_actuator_controls_t *
 
 	int _system_type = _param_mav_type.get();
 
-	unsigned motors_count;
-	bool is_fixed_wing;
+	/* scale outputs depending on system type */
+	if (_system_type == MAV_TYPE_QUADROTOR ||
+	    _system_type == MAV_TYPE_HEXAROTOR ||
+	    _system_type == MAV_TYPE_OCTOROTOR ||
+	    _system_type == MAV_TYPE_VTOL_DUOROTOR ||
+	    _system_type == MAV_TYPE_VTOL_QUADROTOR ||
+	    _system_type == MAV_TYPE_VTOL_TILTROTOR ||
+	    _system_type == MAV_TYPE_VTOL_RESERVED2 ||
+	    _system_type == MAV_TYPE_VTOL_COMPOUND) {
+
+		/* multirotors: set number of rotor outputs depending on type */
 
 	switch (_system_type) {
 	case MAV_TYPE_AIRSHIP:
@@ -109,15 +118,16 @@ void Simulator::actuator_controls_from_outputs(mavlink_hil_actuator_controls_t *
 		is_fixed_wing = false;
 		break;
 
-	case MAV_TYPE_VTOL_RESERVED2:
-		motors_count = 5;
-		is_fixed_wing = false;
-		break;
-
-	case MAV_TYPE_HEXAROTOR:
-		motors_count = 6;
-		is_fixed_wing = false;
-		break;
+		case MAV_TYPE_HEXAROTOR:
+			n = 6;
+			break;
+		case MAV_TYPE_VTOL_COMPOUND:
+			n = 6;
+			break;
+		default:
+			n = 8;
+			break;
+		}
 
 	case MAV_TYPE_OCTOROTOR:
 	case MAV_TYPE_SUBMARINE:

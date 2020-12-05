@@ -60,7 +60,7 @@ public:
 	 * Handle sending of messages. Call this regularly at a fixed frequency.
 	 * @param t current time
 	 */
-	void send();
+	void send(const hrt_abstime t);
 
 	unsigned get_size();
 

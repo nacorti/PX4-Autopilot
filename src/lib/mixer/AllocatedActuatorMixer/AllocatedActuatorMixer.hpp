@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include <mixer/Mixer/Mixer.hpp>
+#include <mixer/MixerBase/Mixer.hpp>
 
 /**
  * Mixer for allocated actuators.

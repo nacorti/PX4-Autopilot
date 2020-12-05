@@ -273,7 +273,7 @@ MavlinkMissionManager::send_mission_current(int32_t seq)
 		/* don't broadcast if no WPs */
 
 	} else {
-		PX4_DEBUG("WPM: Send MISSION_CURRENT ERROR: seq %d out of bounds", seq);
+		PX4_DEBUG("WPM: Send MISSION_CURRENT ERROR: seq %u out of bounds", seq);
 
 		_mavlink->send_statustext_critical("ERROR: wp index out of bounds");
 	}
@@ -460,7 +460,7 @@ MavlinkMissionManager::send_mission_item_reached(uint16_t seq)
 }
 
 void
-MavlinkMissionManager::send()
+MavlinkMissionManager::send(const hrt_abstime now)
 {
 	// do not send anything over high latency communication
 	if (_mavlink->get_mode() == Mavlink::MAVLINK_MODE_IRIDIUM) {
@@ -501,7 +501,7 @@ MavlinkMissionManager::send()
 		}
 
 	} else {
-		if (_slow_rate_limiter.check(hrt_absolute_time())) {
+		if (_slow_rate_limiter.check(now)) {
 			send_mission_current(_current_seq);
 
 			// send the reached message another 10 times

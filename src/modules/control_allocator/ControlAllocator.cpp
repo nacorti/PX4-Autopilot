@@ -92,6 +92,10 @@ ControlAllocator::parameters_updated()
 	// Allocation method & effectiveness source
 	// Do this first: in case a new method is loaded, it will be configured below
 	update_effectiveness_source();
+<<<<<<< HEAD
+	PX4_INFO("Effectivness Sourced!");
+=======
+>>>>>>> 66b066d57d8680e8e530c3d4b610c6f2326174c9
 	update_allocation_method();
 
 	// Minimum actuator values
@@ -235,6 +239,12 @@ ControlAllocator::update_effectiveness_source()
 		case EffectivenessSource::TILTROTOR_VTOL:
 			tmp = new ActuatorEffectivenessTiltrotorVTOL();
 			break;
+<<<<<<< HEAD
+		case EffectivenessSource::COMPOUND_VTOL:
+			tmp = new ActuatorEffectivenessCompoundVTOL();
+			break;
+=======
+>>>>>>> 66b066d57d8680e8e530c3d4b610c6f2326174c9
 
 		default:
 			PX4_ERR("Unknown airframe");
@@ -259,6 +269,10 @@ ControlAllocator::update_effectiveness_source()
 
 			// Swap effectiveness sources
 			if (_actuator_effectiveness != nullptr) {
+<<<<<<< HEAD
+				PX4_INFO("We're about to fail here...");
+=======
+>>>>>>> 66b066d57d8680e8e530c3d4b610c6f2326174c9
 				free(_actuator_effectiveness);
 			}
 
@@ -552,6 +566,10 @@ int ControlAllocator::print_status()
 
 	case EffectivenessSource::TILTROTOR_VTOL:
 		PX4_INFO("EffectivenessSource: Tiltrotor VTOL");
+		break;
+
+	case EffectivenessSource::COMPOUND_VTOL:
+		PX4_INFO("EffectivenessSource: Compound VTOL");
 		break;
 	}
 

@@ -77,4 +77,5 @@ fi
 
 set MAV_TYPE 13
 
-set MIXER hexa_x
+# set MIXER hexa_x
+set MIXER direct

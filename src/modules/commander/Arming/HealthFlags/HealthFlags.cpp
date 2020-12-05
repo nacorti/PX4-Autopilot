@@ -40,6 +40,7 @@
  */
 
 #include "HealthFlags.h"
+#include <uORB/topics/subsystem_info.h>
 
 void set_health_flags(uint64_t subsystem_type, bool present, bool enabled, bool ok, vehicle_status_s &status)
 {

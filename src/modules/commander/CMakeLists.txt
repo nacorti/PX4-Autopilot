@@ -45,9 +45,7 @@ px4_add_module(
 		Commander.cpp
 		commander_helper.cpp
 		esc_calibration.cpp
-		factory_calibration_storage.cpp
 		gyro_calibration.cpp
-		level_calibration.cpp
 		mag_calibration.cpp
 		rc_calibration.cpp
 		state_machine_helper.cpp
@@ -60,7 +58,6 @@ px4_add_module(
 		PreFlightCheck
 		ArmAuthorization
 		HealthFlags
-		sensor_calibration
 	)
 
 if(PX4_TESTING)

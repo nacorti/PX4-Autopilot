@@ -67,10 +67,7 @@ bool PreFlightCheck::powerCheck(orb_advert_t *mavlink_log_pub, const vehicle_sta
 	system_power_sub.update();
 	const system_power_s &system_power = system_power_sub.get();
 
-	if (system_power.timestamp != 0) {
-		int32_t required_power_module_count = 0;
-		param_get(param_find("COM_POWER_COUNT"), &required_power_module_count);
-
+	if (hrt_elapsed_time(&system_power.timestamp) < 1_s) {
 		// Check avionics rail voltages (if USB isn't connected)
 		if (!system_power.usb_connected) {
 			float avionics_power_rail_voltage = system_power.voltage5v_v;
@@ -93,17 +90,18 @@ bool PreFlightCheck::powerCheck(orb_advert_t *mavlink_log_pub, const vehicle_sta
 					mavlink_log_critical(mavlink_log_pub, "CAUTION: Avionics Power high: %6.2f Volt", (double)avionics_power_rail_voltage);
 				}
 			}
+		}
 
+		int power_module_count = countSetBits(system_power.brick_valid);
+		int required_power_module_count;
+		param_get(param_find("COM_POWER_COUNT"), &required_power_module_count);
 
-			const int power_module_count = countSetBits(system_power.brick_valid);
+		if (power_module_count < required_power_module_count) {
+			success = false;
 
-			if (power_module_count < required_power_module_count) {
-				success = false;
-
-				if (report_fail) {
-					mavlink_log_critical(mavlink_log_pub, "Power redundancy not met: %d instead of %d",
-							     power_module_count, required_power_module_count);
-				}
+			if (report_fail) {
+				mavlink_log_critical(mavlink_log_pub, "Power redundancy not met: %d instead of %d",
+						     power_module_count, required_power_module_count);
 			}
 		}
 

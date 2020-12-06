@@ -79,9 +79,14 @@ const char *_config_key[] = {"4x"};
 //#include <debug.h>
 //#define debug(fmt, args...)	syslog(fmt "\n", ##args)
 
-MultirotorMixer::MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle, MultirotorGeometry geometry) :
+MultirotorMixer::MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle, MultirotorGeometry geometry,
+				 float roll_scale, float pitch_scale, float yaw_scale, float idle_speed) :
 	MultirotorMixer(control_cb, cb_handle, _config_index[(int)geometry], _config_rotor_count[(int)geometry])
 {
+	_roll_scale = roll_scale;
+	_pitch_scale = pitch_scale;
+	_yaw_scale = yaw_scale;
+	_idle_speed = -1.0f + idle_speed * 2.0f;	/* shift to output range here to avoid runtime calculation */
 }
 
 MultirotorMixer::MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle, const Rotor *rotors,
@@ -93,7 +98,7 @@ MultirotorMixer::MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle
 	_tmp_array(new float[_rotor_count])
 {
 	for (unsigned i = 0; i < _rotor_count; ++i) {
-		_outputs_prev[i] = -1.f;
+		_outputs_prev[i] = _idle_speed;
 	}
 }
 
@@ -108,14 +113,21 @@ MultirotorMixer::from_text(Mixer::ControlCallback control_cb, uintptr_t cb_handl
 {
 	MultirotorGeometry geometry = MultirotorGeometry::MAX_GEOMETRY;
 	char geomname[16];
+	int s[4];
+	int used;
 
 	/* enforce that the mixer ends with a new line */
 	if (!string_well_formed(buf, buflen)) {
 		return nullptr;
 	}
 
-	if (sscanf(buf, "R: %15s", geomname) != 1) {
+	if (sscanf(buf, "R: %15s %d %d %d %d%n", geomname, &s[0], &s[1], &s[2], &s[3], &used) != 5) {
 		debug("multirotor parse failed on '%s'", buf);
+		return nullptr;
+	}
+
+	if (used > (int)buflen) {
+		debug("OVERFLOW: multirotor spec used %d of %u", used, buflen);
 		return nullptr;
 	}
 
@@ -143,7 +155,14 @@ MultirotorMixer::from_text(Mixer::ControlCallback control_cb, uintptr_t cb_handl
 
 	debug("adding multirotor mixer '%s'", geomname);
 
-	return new MultirotorMixer(control_cb, cb_handle, geometry);
+	return new MultirotorMixer(
+		       control_cb,
+		       cb_handle,
+		       geometry,
+		       s[0] / 10000.0f,
+		       s[1] / 10000.0f,
+		       s[2] / 10000.0f,
+		       s[3] / 10000.0f);
 }
 
 float
@@ -320,9 +339,9 @@ MultirotorMixer::mix(float *outputs, unsigned space)
 		return 0;
 	}
 
-	float roll    = math::constrain(get_control(0, 0), -1.0f, 1.0f);
-	float pitch   = math::constrain(get_control(0, 1), -1.0f, 1.0f);
-	float yaw     = math::constrain(get_control(0, 2), -1.0f, 1.0f);
+	float roll    = math::constrain(get_control(0, 0) * _roll_scale, -1.0f, 1.0f);
+	float pitch   = math::constrain(get_control(0, 1) * _pitch_scale, -1.0f, 1.0f);
+	float yaw     = math::constrain(get_control(0, 2) * _yaw_scale, -1.0f, 1.0f);
 	float thrust  = math::constrain(get_control(0, 3), 0.0f, 1.0f);
 
 	// clean out class variable used to capture saturation
@@ -356,7 +375,7 @@ MultirotorMixer::mix(float *outputs, unsigned space)
 							_thrust_factor));
 		}
 
-		outputs[i] = math::constrain((2.f * outputs[i] - 1.f), -1.f, 1.f);
+		outputs[i] = math::constrain(_idle_speed + (outputs[i] * (1.0f - _idle_speed)), _idle_speed, 1.0f);
 	}
 
 	// Slew rate limiting and saturation checking
@@ -370,7 +389,7 @@ MultirotorMixer::mix(float *outputs, unsigned space)
 		// clipping if airmode==roll/pitch), since in all other cases thrust will
 		// be reduced or boosted and we can keep the integrators enabled, which
 		// leads to better tracking performance.
-		if (outputs[i] < -0.99f) {
+		if (outputs[i] < _idle_speed + 0.01f) {
 			if (_airmode == Airmode::disabled) {
 				clipping_low_roll_pitch = true;
 				clipping_low_yaw = true;

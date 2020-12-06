@@ -34,6 +34,7 @@
 # add the core Flight tasks that the additional flight tasks depend on
 add_subdirectory(FlightTask)
 add_subdirectory(Utility)
+add_subdirectory(Manual)
 add_subdirectory(Auto)
 add_subdirectory(AutoMapper)
 

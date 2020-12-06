@@ -37,18 +37,15 @@
 #include "WorkQueue.hpp"
 
 #include <containers/IntrusiveQueue.hpp>
-#include <containers/IntrusiveSortedList.hpp>
 #include <px4_platform_common/defines.h>
 #include <drivers/drv_hrt.h>
 #include <lib/mathlib/mathlib.h>
 #include <lib/perf/perf_counter.h>
 
-#include <string.h>
-
 namespace px4
 {
 
-class WorkItem : public IntrusiveSortedListNode<WorkItem *>, public IntrusiveQueueNode<WorkItem *>
+class WorkItem : public ListNode<WorkItem *>, public IntrusiveQueueNode<WorkItem *>
 {
 public:
 
@@ -60,9 +57,6 @@ public:
 	WorkItem(WorkItem &&) = delete;
 	WorkItem &operator=(WorkItem &&) = delete;
 
-	// WorkItems sorted by name
-	bool operator<=(const WorkItem &rhs) const { return (strcmp(ItemName(), rhs.ItemName()) <= 0); }
-
 	inline void ScheduleNow()
 	{
 		if (_wq != nullptr) {
@@ -70,7 +64,7 @@ public:
 		}
 	}
 
-	virtual void print_run_status();
+	virtual void print_run_status() const;
 
 	/**
 	 * Switch to a different WorkQueue.
@@ -99,12 +93,10 @@ protected:
 
 	void RunPreamble()
 	{
-		if (_run_count == 0) {
-			_time_first_run = hrt_absolute_time();
-			_run_count = 1;
+		_run_count++;
 
-		} else {
-			_run_count++;
+		if (_time_first_run == 0) {
+			_time_first_run = hrt_absolute_time();
 		}
 	}
 

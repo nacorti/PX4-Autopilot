@@ -42,7 +42,14 @@ set(SRCS
 
 if(${PX4_PLATFORM} STREQUAL "nuttx")
 	list(APPEND SRCS
+		cpuload.c
+		cpuload.h
+		print_load_nuttx.c
 		otp.c
+	)
+else()
+	list(APPEND SRCS
+		print_load_posix.c
 	)
 endif()
 

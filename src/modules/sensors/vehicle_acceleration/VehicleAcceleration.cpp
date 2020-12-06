@@ -43,7 +43,7 @@ namespace sensors
 
 VehicleAcceleration::VehicleAcceleration() :
 	ModuleParams(nullptr),
-	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::nav_and_controllers)
+	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::navigation_and_controllers)
 {
 	_lp_filter.set_cutoff_frequency(kInitialRateHz, _param_imu_accel_cutoff.get());
 }
@@ -65,8 +65,7 @@ bool VehicleAcceleration::Start()
 	}
 
 	if (!SensorSelectionUpdate(true)) {
-		_selected_sensor_sub_index = 0;
-		_sensor_sub.registerCallback();
+		ScheduleDelayed(10_ms);
 	}
 
 	return true;
@@ -75,7 +74,10 @@ bool VehicleAcceleration::Start()
 void VehicleAcceleration::Stop()
 {
 	// clear all registered callbacks
-	_sensor_sub.unregisterCallback();
+	for (auto &sub : _sensor_sub) {
+		sub.unregisterCallback();
+	}
+
 	_sensor_selection_sub.unregisterCallback();
 
 	Deinit();
@@ -105,11 +107,11 @@ void VehicleAcceleration::CheckFilters()
 					const uint8_t samples = math::constrain(roundf(configured_interval_us / sample_interval_avg), 1.f,
 										(float)sensor_accel_s::ORB_QUEUE_LENGTH);
 
-					_sensor_sub.set_required_updates(samples);
+					_sensor_sub[_selected_sensor_sub_index].set_required_updates(samples);
 					_required_sample_updates = samples;
 
 				} else {
-					_sensor_sub.set_required_updates(1);
+					_sensor_sub[_selected_sensor_sub_index].set_required_updates(1);
 					_required_sample_updates = 1;
 				}
 			}
@@ -138,15 +140,6 @@ void VehicleAcceleration::CheckFilters()
 
 void VehicleAcceleration::SensorBiasUpdate(bool force)
 {
-	// find corresponding estimated sensor bias
-	if (_estimator_selector_status_sub.updated()) {
-		estimator_selector_status_s estimator_selector_status;
-
-		if (_estimator_selector_status_sub.copy(&estimator_selector_status)) {
-			_estimator_sensor_bias_sub.ChangeInstance(estimator_selector_status.primary_instance);
-		}
-	}
-
 	if (_estimator_sensor_bias_sub.updated() || force) {
 		estimator_sensor_bias_s bias;
 
@@ -168,12 +161,17 @@ bool VehicleAcceleration::SensorSelectionUpdate(bool force)
 		_sensor_selection_sub.copy(&sensor_selection);
 
 		if (_selected_sensor_device_id != sensor_selection.accel_device_id) {
-			for (uint8_t i = 0; i < MAX_SENSOR_COUNT; i++) {
-				uORB::SubscriptionData<sensor_accel_s> sensor_accel_sub{ORB_ID(sensor_accel), i};
+			// clear all registered callbacks
+			for (auto &sub : _sensor_sub) {
+				sub.unregisterCallback();
+			}
 
-				if ((sensor_accel_sub.get().device_id != 0) && (sensor_accel_sub.get().device_id == sensor_selection.accel_device_id)) {
+			for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
+				sensor_accel_s report{};
+				_sensor_sub[i].copy(&report);
 
-					if (_sensor_sub.ChangeInstance(i) && _sensor_sub.registerCallback()) {
+				if ((report.device_id != 0) && (report.device_id == sensor_selection.accel_device_id)) {
+					if (_sensor_sub[i].registerCallback()) {
 						PX4_DEBUG("selected sensor changed %d -> %d", _selected_sensor_sub_index, i);
 
 						// record selected sensor (array index)
@@ -183,7 +181,7 @@ bool VehicleAcceleration::SensorSelectionUpdate(bool force)
 						// clear bias and corrections
 						_bias.zero();
 
-						_calibration.set_device_id(sensor_accel_sub.get().device_id);
+						_calibration.set_device_id(report.device_id);
 
 						// reset sample interval accumulator on sensor change
 						_timestamp_sample_last = 0;
@@ -229,44 +227,54 @@ void VehicleAcceleration::Run()
 	SensorBiasUpdate(selection_updated);
 	ParametersUpdate();
 
+	bool sensor_updated = _sensor_sub[_selected_sensor_sub_index].updated();
+
 	// process all outstanding messages
-	sensor_accel_s sensor_data;
+	while (sensor_updated || selection_updated) {
+		selection_updated = false;
 
-	while (_sensor_sub.update(&sensor_data)) {
+		sensor_accel_s sensor_data;
 
-		// collect sample interval average for filters
-		if ((_timestamp_sample_last > 0) && (sensor_data.timestamp_sample > _timestamp_sample_last)) {
-			_interval_sum += (sensor_data.timestamp_sample - _timestamp_sample_last);
-			_interval_count++;
+		if (_sensor_sub[_selected_sensor_sub_index].copy(&sensor_data)) {
 
-		} else {
-			_interval_sum = 0.f;
-			_interval_count = 0.f;
-		}
+			if (sensor_updated) {
+				// collect sample interval average for filters
+				if ((_timestamp_sample_last > 0) && (sensor_data.timestamp_sample > _timestamp_sample_last)) {
+					_interval_sum += (sensor_data.timestamp_sample - _timestamp_sample_last);
+					_interval_count++;
 
-		_timestamp_sample_last = sensor_data.timestamp_sample;
+				} else {
+					_interval_sum = 0.f;
+					_interval_count = 0.f;
+				}
 
-		CheckFilters();
+				_timestamp_sample_last = sensor_data.timestamp_sample;
+			}
 
-		// Apply calibration and filter
-		//  - calibration offsets, scale factors, and thermal scale (if available)
-		//  - estimated in run bias (if available)
-		//  - biquad low-pass filter
-		const Vector3f accel_corrected = _calibration.Correct(Vector3f{sensor_data.x, sensor_data.y, sensor_data.z}) - _bias;
-		const Vector3f accel_filtered = _lp_filter.apply(accel_corrected);
+			CheckFilters();
 
-		_acceleration_prev = accel_corrected;
+			// Apply calibration and filter
+			//  - calibration offsets, scale factors, and thermal scale (if available)
+			//  - estimated in run bias (if available)
+			//  - biquad low-pass filter
+			const Vector3f accel_corrected = _calibration.Correct(Vector3f{sensor_data.x, sensor_data.y, sensor_data.z}) - _bias;
+			const Vector3f accel_filtered = _lp_filter.apply(accel_corrected);
 
-		// publish once all new samples are processed
-		if (!_sensor_sub.updated()) {
-			// Publish vehicle_acceleration
-			vehicle_acceleration_s v_acceleration;
-			v_acceleration.timestamp_sample = sensor_data.timestamp_sample;
-			accel_filtered.copyTo(v_acceleration.xyz);
-			v_acceleration.timestamp = hrt_absolute_time();
-			_vehicle_acceleration_pub.publish(v_acceleration);
+			_acceleration_prev = accel_corrected;
 
-			return;
+			// publish once all new samples are processed
+			sensor_updated = _sensor_sub[_selected_sensor_sub_index].updated();
+
+			if (!sensor_updated) {
+				// Publish vehicle_acceleration
+				vehicle_acceleration_s v_acceleration;
+				v_acceleration.timestamp_sample = sensor_data.timestamp_sample;
+				accel_filtered.copyTo(v_acceleration.xyz);
+				v_acceleration.timestamp = hrt_absolute_time();
+				_vehicle_acceleration_pub.publish(v_acceleration);
+
+				return;
+			}
 		}
 	}
 }

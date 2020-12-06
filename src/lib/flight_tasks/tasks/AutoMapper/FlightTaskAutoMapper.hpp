@@ -41,14 +41,13 @@
 #pragma once
 
 #include "FlightTaskAuto.hpp"
-#include "Sticks.hpp"
 
 class FlightTaskAutoMapper : public FlightTaskAuto
 {
 public:
-	FlightTaskAutoMapper();
+	FlightTaskAutoMapper() = default;
 	virtual ~FlightTaskAutoMapper() = default;
-	bool activate(const vehicle_local_position_setpoint_s &last_setpoint) override;
+	bool activate(vehicle_local_position_setpoint_s last_setpoint) override;
 	bool update() override;
 
 protected:
@@ -77,7 +76,7 @@ protected:
 				       );
 
 private:
-	Sticks _sticks;
+
 	void _reset(); /**< Resets member variables to current vehicle state */
 	WaypointType _type_previous{WaypointType::idle}; /**< Previous type of current target triplet. */
 	bool _highEnoughForLandingGear(); /**< Checks if gears can be lowered. */

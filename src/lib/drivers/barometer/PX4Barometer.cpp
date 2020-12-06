@@ -36,9 +36,9 @@
 
 #include <lib/drivers/device/Device.hpp>
 
-PX4Barometer::PX4Barometer(uint32_t device_id) :
+PX4Barometer::PX4Barometer(uint32_t device_id, ORB_PRIO priority) :
 	CDev(nullptr),
-	_sensor_baro_pub{ORB_ID(sensor_baro)}
+	_sensor_baro_pub{ORB_ID(sensor_baro), priority}
 {
 	_class_device_instance = register_class_devname(BARO_BASE_DEVICE_PATH);
 	_sensor_baro_pub.advertise();
@@ -55,7 +55,8 @@ PX4Barometer::~PX4Barometer()
 	_sensor_baro_pub.unadvertise();
 }
 
-void PX4Barometer::set_device_type(uint8_t devtype)
+void
+PX4Barometer::set_device_type(uint8_t devtype)
 {
 	// current DeviceStructure
 	union device::Device::DeviceId device_id;
@@ -68,12 +69,13 @@ void PX4Barometer::set_device_type(uint8_t devtype)
 	_sensor_baro_pub.get().device_id = device_id.devid;
 }
 
-void PX4Barometer::update(const hrt_abstime &timestamp_sample, float pressure)
+void
+PX4Barometer::update(hrt_abstime timestamp, float pressure)
 {
 	sensor_baro_s &report = _sensor_baro_pub.get();
 
-	report.timestamp_sample = timestamp_sample;
+	report.timestamp = timestamp;
 	report.pressure = pressure;
-	report.timestamp = hrt_absolute_time();
+
 	_sensor_baro_pub.update();
 }

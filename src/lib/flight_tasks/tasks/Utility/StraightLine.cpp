@@ -76,7 +76,7 @@ void StraightLine::generateSetpoints(matrix::Vector3f &position_setpoint, matrix
 
 	// check if we plan to go against the line direction which indicates we reached the goal
 	if (start_to_end * vehicle_to_end < 0) {
-		_end_reached = true;
+		end_reached = true;
 	}
 }
 
@@ -85,6 +85,6 @@ void StraightLine::setLineFromTo(const Vector3f &start, const Vector3f &end)
 	if (PX4_ISFINITE(start.norm_squared()) && PX4_ISFINITE(end.norm_squared())) {
 		_start = start;
 		_end = end;
-		_end_reached = false;
+		end_reached = false;
 	}
 }

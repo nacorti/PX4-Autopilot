@@ -80,8 +80,8 @@ else()
 	install(
 		DIRECTORY
 			${PROJECT_SOURCE_DIR}/posix-configs
+			${PROJECT_SOURCE_DIR}/ROMFS
 			${PROJECT_SOURCE_DIR}/test
-			${CMAKE_BINARY_DIR}/etc
 			${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 		DESTINATION
 			${PROJECT_NAME}
@@ -97,11 +97,6 @@ px4_posix_generate_symlinks(
 	TARGET px4
 )
 
-if (config_romfs_root)
-	add_subdirectory(${PX4_SOURCE_DIR}/ROMFS ${PX4_BINARY_DIR}/ROMFS)
-	add_dependencies(px4 romfs_gen_files_target)
-endif()
-
 
 # board defined upload helper
 if(EXISTS "${PX4_BOARD_DIR}/cmake/upload.cmake")
@@ -115,17 +110,7 @@ if("${PX4_BOARD}" MATCHES "beaglebone_blue")
 elseif("${PX4_BOARD}" MATCHES "emlid_navio2")
 	target_link_libraries(px4 PRIVATE atomic)
 
-	# vscode launch.json
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Debug/launch_rpi.json.in ${PX4_SOURCE_DIR}/.vscode/launch.json COPYONLY)
-
 elseif("${PX4_BOARD}" MATCHES "sitl")
-
-	# vscode launch.json
-	if(${PX4_BOARD_LABEL} MATCHES "replay")
-		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Debug/launch_replay.json.in ${PX4_SOURCE_DIR}/.vscode/launch.json COPYONLY)
-	else()
-		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Debug/launch_sim.json.in ${PX4_SOURCE_DIR}/.vscode/launch.json COPYONLY)
-	endif()
 
 	include(sitl_target)
 	if(BUILD_TESTING)
@@ -172,18 +157,10 @@ elseif("${PX4_BOARD}" MATCHES "sitl")
 			${PROJECT_NAME}/Tools
 		)
 
-	# ROMFS files
-	install(
-		DIRECTORY
-			${PX4_BINARY_DIR}/etc
-		DESTINATION
-			${PROJECT_NAME}/build/px4_sitl_default
-		)
-
 	# sitl_gazebo built plugins
 	install(
 		DIRECTORY
-			${PX4_BINARY_DIR}/build_gazebo
+			${PROJECT_SOURCE_DIR}/build/px4_sitl_default/build_gazebo
 		DESTINATION
 			${PROJECT_NAME}/build/px4_sitl_default
 		FILES_MATCHING

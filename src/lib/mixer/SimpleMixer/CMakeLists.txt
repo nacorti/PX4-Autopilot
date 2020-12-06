@@ -35,5 +35,5 @@ add_library(SimpleMixer
 	SimpleMixer.cpp
 	SimpleMixer.hpp
 )
-target_link_libraries(SimpleMixer PRIVATE MixerBase)
+target_link_libraries(SimpleMixer PRIVATE Mixer)
 add_dependencies(SimpleMixer prebuild_targets)

@@ -35,8 +35,7 @@
 
 BatterySimulator::BatterySimulator() :
 	ModuleParams(nullptr),
-	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::hp_default),
-	_battery(1, this, BATTERY_SIMLATOR_SAMPLE_INTERVAL_US)
+	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::hp_default)
 {
 }
 
@@ -47,7 +46,7 @@ BatterySimulator::~BatterySimulator()
 
 bool BatterySimulator::init()
 {
-	ScheduleOnInterval(BATTERY_SIMLATOR_SAMPLE_INTERVAL_US);
+	ScheduleOnInterval(SimulatorBattery::SIMLATOR_BATTERY_SAMPLE_INTERVAL_US);
 	return true;
 }
 

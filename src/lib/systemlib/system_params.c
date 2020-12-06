@@ -179,7 +179,7 @@ PARAM_DEFINE_INT32(SYS_CAL_BARO, 0);
  * Calibration will complete for each sensor when the temperature increase above the starting temeprature exceeds the value set by SYS_CAL_TDEL.
  * If the temperature rise is insufficient, the calibration will continue indefinitely and the board will need to be repowered to exit.
  *
- * @unit celcius
+ * @unit deg C
  * @min 10
  * @group System
  */
@@ -190,7 +190,7 @@ PARAM_DEFINE_INT32(SYS_CAL_TDEL, 24);
  *
  * Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.
  *
- * @unit celcius
+ * @unit deg C
  * @group System
  */
 PARAM_DEFINE_INT32(SYS_CAL_TMIN, 5);
@@ -200,7 +200,7 @@ PARAM_DEFINE_INT32(SYS_CAL_TMIN, 5);
  *
  * Temperature calibration will not start if the temperature of any sensor is higher than the value set by SYS_CAL_TMAX.
  *
- * @unit celcius
+ * @unit deg C
  * @group System
  */
 PARAM_DEFINE_INT32(SYS_CAL_TMAX, 10);
@@ -235,19 +235,6 @@ PARAM_DEFINE_INT32(SYS_HAS_MAG, 1);
 PARAM_DEFINE_INT32(SYS_HAS_BARO, 1);
 
 /**
- * Enable factory calibration mode
- *
- * If enabled, future sensor calibrations will be stored to /fs/mtd_caldata.
- *
- * Note: this is only supported on boards with a separate calibration storage
- * /fs/mtd_caldata.
- *
- * @boolean
- * @group System
- */
-PARAM_DEFINE_INT32(SYS_FAC_CAL_MODE, 0);
-
-/**
  * Bootloader update
  *
  * If enabled, update the bootloader on the next boot.
@@ -268,16 +255,3 @@ PARAM_DEFINE_INT32(SYS_FAC_CAL_MODE, 0);
  * @group System
  */
 PARAM_DEFINE_INT32(SYS_BL_UPDATE, 0);
-
-/**
- * Enable failure injection
- *
- * If enabled allows MAVLink INJECT_FAILURE commands.
- *
- * WARNING: the failures can easily cause crashes and are to be used with caution!
- *
- * @boolean
- *
- * @group System
- */
-PARAM_DEFINE_INT32(SYS_FAILURE_EN, 0);

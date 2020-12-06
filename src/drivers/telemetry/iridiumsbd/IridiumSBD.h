@@ -41,6 +41,7 @@
 
 #include <uORB/Publication.hpp>
 #include <uORB/topics/iridiumsbd_status.h>
+#include <uORB/topics/subsystem_info.h>
 
 typedef enum {
 	SATCOM_OK = 0,
@@ -254,7 +255,9 @@ private:
 	 */
 	pollevent_t poll_state(struct file *filp);
 
-	void publish_iridium_status();
+	void publish_iridium_status(void);
+
+	void publish_subsystem_status();
 
 	/**
 	 * Notification of the first open of CDev.
@@ -302,6 +305,7 @@ private:
 	uint16_t _packet_length = 0;
 
 	uORB::Publication<iridiumsbd_status_s> _iridiumsbd_status_pub{ORB_ID(iridiumsbd_status)};
+	uORB::PublicationQueued<subsystem_info_s> _subsystem_pub{ORB_ID(subsystem_info)};
 
 	bool _test_pending = false;
 	char _test_command[32];
@@ -338,5 +342,6 @@ private:
 
 	bool _verbose = false;
 
-	iridiumsbd_status_s _status{};
+	iridiumsbd_status_s _status = {};
+	subsystem_info_s _info = {};
 };

@@ -200,10 +200,13 @@ CollisionPrevention::_updateObstacleMap()
 	_sub_vehicle_attitude.update();
 
 	// add distance sensor data
-	for (auto &dist_sens_sub : _distance_sensor_subs) {
-		distance_sensor_s distance_sensor;
+	for (unsigned i = 0; i < ORB_MULTI_MAX_INSTANCES; i++) {
 
-		if (dist_sens_sub.update(&distance_sensor)) {
+		// if a new distance sensor message has arrived
+		if (_sub_distance_sensor[i].updated()) {
+			distance_sensor_s distance_sensor {};
+			_sub_distance_sensor[i].copy(&distance_sensor);
+
 			// consider only instances with valid data and orientations useful for collision prevention
 			if ((getElapsedTime(&distance_sensor.timestamp) < RANGE_STREAM_TIMEOUT_US) &&
 			    (distance_sensor.orientation != distance_sensor_s::ROTATION_DOWNWARD_FACING) &&

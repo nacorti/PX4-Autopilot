@@ -14,7 +14,7 @@ px4_add_board(
 		TEL1:/dev/ttyS4
 		TEL2:/dev/ttyS1
 	DRIVERS
-		adc/board_adc
+		adc
 		barometer # all available barometer drivers
 		barometer/mpl3115a2
 		batt_smbus
@@ -22,7 +22,6 @@ px4_add_board(
 		camera_trigger
 		differential_pressure # all available differential pressure drivers
 		distance_sensor # all available distance sensor drivers
-		distance_sensor/srf05 # Specific driver
 		gps
 		#heater
 		#imu # all available imu drivers
@@ -99,7 +98,6 @@ px4_add_board(
 		reboot
 		reflect
 		sd_bench
-		system_time
 		tests # tests and test runner
 		top
 		topic_listener

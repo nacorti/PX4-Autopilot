@@ -17,15 +17,13 @@ struct file_operations {
 using px4_file_operations_t = struct file_operations;
 using mode_t = uint32_t;
 
-class CDev;
-
 struct file_t {
 	int f_oflags{0};
 	void *f_priv{nullptr};
-	CDev *cdev{nullptr};
+	void *vdev{nullptr};
 
 	file_t() = default;
-	file_t(int f, CDev *c) : f_oflags(f), cdev(c) {}
+	file_t(int f, void *c) : f_oflags(f), vdev(c) {}
 };
 
 } // namespace cdev

@@ -403,7 +403,7 @@ DShotOutput::set_mode(Mode mode)
 		/* default output rates */
 		_output_mask = 0x1f;
 		_outputs_initialized = false;
-		_num_outputs = 5;
+		_num_outputs = 4;
 
 		break;
 
@@ -1405,13 +1405,13 @@ int DShotOutput::custom_command(int argc, char *argv[])
 		}
 	}
 
-	struct VerbCommand {
+	struct Command {
 		const char *name;
 		dshot_command_t command;
 		int num_repetitions;
 	};
 
-	constexpr VerbCommand commands[] = {
+	constexpr Command commands[] = {
 		{"reverse", DShot_cmd_spin_direction_reversed, 10},
 		{"normal", DShot_cmd_spin_direction_normal, 10},
 		{"save", DShot_cmd_save_settings, 10},

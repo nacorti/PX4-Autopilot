@@ -164,12 +164,7 @@ void PositionControl::_velocityControl(const float dt)
 	// Get allowed horizontal thrust after prioritizing vertical control
 	const float thrust_max_squared = _lim_thr_max * _lim_thr_max;
 	const float thrust_z_squared = _thr_sp(2) * _thr_sp(2);
-	const float thrust_max_xy_squared = thrust_max_squared - thrust_z_squared;
-	float thrust_max_xy = 0;
-
-	if (thrust_max_xy_squared > 0) {
-		thrust_max_xy = sqrtf(thrust_max_xy_squared);
-	}
+	float thrust_max_xy = sqrtf(thrust_max_squared - thrust_z_squared);
 
 	// Saturate thrust in horizontal direction
 	const Vector2f thrust_sp_xy(_thr_sp);

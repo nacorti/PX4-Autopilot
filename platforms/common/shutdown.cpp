@@ -47,7 +47,6 @@
 #define MODULE_NAME "shutdown"
 #endif
 
-#include <px4_platform_common/external_reset_lockout.h>
 #include <px4_platform_common/log.h>
 
 #include <stdint.h>
@@ -70,7 +69,6 @@ int px4_shutdown_lock()
 
 	if (ret == 0) {
 		++shutdown_lock_counter;
-		px4_indicate_external_reset_lockout(LockoutComponent::SystemShutdownLock, true);
 		return pthread_mutex_unlock(&shutdown_mutex);
 	}
 
@@ -84,10 +82,6 @@ int px4_shutdown_unlock()
 	if (ret == 0) {
 		if (shutdown_lock_counter > 0) {
 			--shutdown_lock_counter;
-
-			if (shutdown_lock_counter == 0) {
-				px4_indicate_external_reset_lockout(LockoutComponent::SystemShutdownLock, false);
-			}
 
 		} else {
 			PX4_ERR("unmatched number of px4_shutdown_unlock() calls");
@@ -174,7 +168,7 @@ static void shutdown_worker(void *arg)
 		if (shutdown_args & SHUTDOWN_ARG_REBOOT) {
 #if defined(CONFIG_BOARDCTL_RESET)
 			PX4_INFO_RAW("Reboot NOW.");
-			board_reset((shutdown_args & SHUTDOWN_ARG_TO_BOOTLOADER) ? 1 : 0);
+			board_reset(shutdown_args & SHUTDOWN_ARG_TO_BOOTLOADER);
 #else
 			PX4_PANIC("board reset not available");
 #endif

@@ -32,4 +32,3 @@
 ############################################################################
 
 px4_add_library(drivers_magnetometer PX4Magnetometer.cpp)
-target_link_libraries(drivers_magnetometer PRIVATE conversion)

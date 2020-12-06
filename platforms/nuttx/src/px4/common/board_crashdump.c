@@ -51,9 +51,8 @@
 
 #include <nuttx/board.h>
 
-#include "arm_internal.h"
+#include "up_internal.h"
 #include <systemlib/hardfault_log.h>
-#include "nvic.h"
 
 #if defined(CONFIG_STM32F7_BBSRAM) && defined(CONFIG_STM32F7_SAVE_CRASHDUMP)
 #  define HAS_BBSRAM CONFIG_STM32F7_BBSRAM
@@ -130,7 +129,7 @@ int board_hardfault_init(int display_to_console, bool allow_prompt)
 
 		/* Also end the misery for a user that holds for a key down on the console */
 
-		int bytesWaiting = 0;
+		int bytesWaiting;
 		ioctl(fileno(stdin), FIONREAD, (unsigned long)((uintptr_t) &bytesWaiting));
 
 		if (reboots > display_to_console || bytesWaiting != 0) {
@@ -235,7 +234,7 @@ static uint32_t *__attribute__((noinline)) __sdata_addr(void)
 }
 
 
-__EXPORT void board_crashdump(uintptr_t currentsp, FAR void *tcb, FAR const char *filename, int lineno)
+__EXPORT void board_crashdump(uintptr_t currentsp, FAR void *tcb, FAR const uint8_t *filename, int lineno)
 {
 #ifndef BOARD_CRASHDUMP_RESET_ONLY
 	/* We need a chunk of ram to save the complete context in.
@@ -288,16 +287,6 @@ __EXPORT void board_crashdump(uintptr_t currentsp, FAR void *tcb, FAR const char
 
 	pdump->info.pid = rtcb->pid;
 
-	pdump->info.fault_regs.cfsr  = getreg32(NVIC_CFAULTS);
-	pdump->info.fault_regs.hfsr  = getreg32(NVIC_HFAULTS);
-	pdump->info.fault_regs.dfsr  = getreg32(NVIC_DFAULTS);
-	pdump->info.fault_regs.mmfsr = getreg32(NVIC_MEMMANAGE_ADDR);
-	pdump->info.fault_regs.bfsr  = getreg32(NVIC_BFAULT_ADDR);
-	pdump->info.fault_regs.afsr  = getreg32(NVIC_AFAULTS);
-#if defined(CONFIG_ARCH_CORTEXM7)
-	pdump->info.fault_regs.abfsr = getreg32(NVIC_ABFSR);
-#endif
-	pdump->info.flags |= eFaultRegPresent;
 
 	/* If  current_regs is not NULL then we are in an interrupt context
 	 * and the user context is in current_regs else we are running in
@@ -377,14 +366,14 @@ __EXPORT void board_crashdump(uintptr_t currentsp, FAR void *tcb, FAR const char
 		char *dead = "Memory wiped - dump not saved!";
 
 		while (*dead) {
-			arm_lowputc(*dead++);
+			up_lowputc(*dead++);
 		}
 
 	} else if (rv == -ENOSPC) {
 
 		/* hard fault again */
 
-		arm_lowputc('!');
+		up_lowputc('!');
 	}
 
 #endif /* BOARD_CRASHDUMP_RESET_ONLY */

@@ -17,7 +17,7 @@ px4_add_board(
 		TEL2:/dev/ttyS2
 		TEL4:/dev/ttyS6
 	DRIVERS
-		adc/board_adc
+		adc
 		#barometer # all available barometer drivers
 		barometer/ms5611
 		#batt_smbus
@@ -26,7 +26,7 @@ px4_add_board(
 		differential_pressure # all available differential pressure drivers
 		#distance_sensor # all available distance sensor drivers
 		distance_sensor/ll40ls
-		distance_sensor/lightware_laser_serial
+		distance_sensor/sf0x
 		gps
 		imu/l3gd20
 		imu/lsm303d

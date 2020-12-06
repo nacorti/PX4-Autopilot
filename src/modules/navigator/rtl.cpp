@@ -76,10 +76,6 @@ void RTL::find_RTL_destination()
 		return;
 	}
 
-	if (!_navigator->home_position_valid()) {
-		return;
-	}
-
 	_destination_check_time = hrt_absolute_time();
 
 	// get home position:
@@ -94,15 +90,7 @@ void RTL::find_RTL_destination()
 	// get distance to home position
 	double dlat = home_landing_position.lat - global_position.lat;
 	double dlon = home_landing_position.lon - global_position.lon;
-
-	double lon_scale = cos(math::radians(global_position.lat));
-
-	auto coord_dist_sq = [lon_scale](double lat_diff, double lon_diff) -> double {
-		double lon_diff_scaled =  lon_scale * matrix::wrap(lon_diff, -180., 180.);
-		return lat_diff * lat_diff + lon_diff_scaled * lon_diff_scaled;
-	};
-
-	double min_dist_squared = coord_dist_sq(dlat, dlon);
+	double min_dist_squared = dlat * dlat + dlon * dlon;
 
 	_destination.type = RTL_DESTINATION_HOME;
 
@@ -114,7 +102,7 @@ void RTL::find_RTL_destination()
 		// compare home position to landing position to decide which is closer
 		dlat = mission_landing_lat - global_position.lat;
 		dlon = mission_landing_lon - global_position.lon;
-		double dist_squared = coord_dist_sq(dlat, dlon);
+		double dist_squared = dlat * dlat + dlon * dlon;
 
 		// set destination to mission landing if closest or in RTL_LAND or RTL_MISSION (so not in RTL_CLOSEST)
 		if (dist_squared < min_dist_squared || rtl_type() != RTL_CLOSEST) {
@@ -157,7 +145,7 @@ void RTL::find_RTL_destination()
 		// TODO: take altitude into account for distance measurement
 		dlat = mission_safe_point.lat - global_position.lat;
 		dlon = mission_safe_point.lon - global_position.lon;
-		double dist_squared = coord_dist_sq(dlat, dlon);
+		double dist_squared = dlat * dlat + dlon * dlon;
 
 		if (dist_squared < min_dist_squared) {
 			closest_index = current_seq;
@@ -295,7 +283,7 @@ void RTL::set_rtl_item()
 			_mission_item.lon = gpos.lon;
 			_mission_item.altitude = _rtl_alt;
 			_mission_item.altitude_is_relative = false;
-			_mission_item.yaw = _navigator->get_local_position()->heading;
+			_mission_item.yaw = _navigator->get_local_position()->yaw;
 			_mission_item.acceptance_radius = _navigator->get_acceptance_radius();
 			_mission_item.time_inside = 0.0f;
 			_mission_item.autocontinue = true;

@@ -87,7 +87,7 @@ static constexpr unsigned char crc_lsb_vector[] = {
 
 CM8JL65::CM8JL65(const char *port, uint8_t rotation) :
 	ScheduledWorkItem(MODULE_NAME, px4::serial_port_to_wq(port)),
-	_px4_rangefinder(0 /* TODO: device ids */, rotation)
+	_px4_rangefinder(0 /* TODO: device ids */, ORB_PRIO_DEFAULT, rotation)
 {
 	// Store the port name.
 	strncpy(_port, port, sizeof(_port) - 1);
@@ -166,12 +166,8 @@ CM8JL65::collect()
 			index--;
 		}
 
-	} else if (bytes_read == -1 && errno == EAGAIN) {
-		return -EAGAIN;
-
 	} else {
-
-		PX4_ERR("read error: %i, errno: %i", bytes_read, errno);
+		PX4_INFO("read error: %d", bytes_read);
 		perf_count(_comms_errors);
 		perf_end(_sample_perf);
 		return PX4_ERROR;

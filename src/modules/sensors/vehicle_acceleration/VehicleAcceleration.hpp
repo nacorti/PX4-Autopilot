@@ -33,7 +33,8 @@
 
 #pragma once
 
-#include <lib/sensor_calibration/Accelerometer.hpp>
+#include <sensor_calibration/SensorCalibration.hpp>
+
 #include <lib/mathlib/math/Limits.hpp>
 #include <lib/matrix/matrix/math.hpp>
 #include <lib/mathlib/math/filter/LowPassFilter2pVector3f.hpp>
@@ -44,7 +45,6 @@
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
-#include <uORB/topics/estimator_selector_status.h>
 #include <uORB/topics/estimator_sensor_bias.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/sensor_accel.h>
@@ -57,6 +57,7 @@ namespace sensors
 class VehicleAcceleration : public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
+
 	VehicleAcceleration();
 	~VehicleAcceleration() override;
 
@@ -73,18 +74,21 @@ private:
 	void SensorBiasUpdate(bool force = false);
 	bool SensorSelectionUpdate(bool force = false);
 
-	static constexpr int MAX_SENSOR_COUNT = 4;
+	static constexpr int MAX_SENSOR_COUNT = 3;
 
 	uORB::Publication<vehicle_acceleration_s> _vehicle_acceleration_pub{ORB_ID(vehicle_acceleration)};
 
-	uORB::Subscription _estimator_selector_status_sub{ORB_ID(estimator_selector_status)};
 	uORB::Subscription _estimator_sensor_bias_sub{ORB_ID(estimator_sensor_bias)};
 	uORB::Subscription _params_sub{ORB_ID(parameter_update)};
 
 	uORB::SubscriptionCallbackWorkItem _sensor_selection_sub{this, ORB_ID(sensor_selection)};
-	uORB::SubscriptionCallbackWorkItem _sensor_sub{this, ORB_ID(sensor_accel)};
+	uORB::SubscriptionCallbackWorkItem _sensor_sub[MAX_SENSOR_COUNT] {
+		{this, ORB_ID(sensor_accel), 0},
+		{this, ORB_ID(sensor_accel), 1},
+		{this, ORB_ID(sensor_accel), 2}
+	};
 
-	calibration::Accelerometer _calibration{};
+	SensorCalibration _calibration{SensorCalibration::SensorType::Accelerometer};
 
 	matrix::Vector3f _bias{0.f, 0.f, 0.f};
 

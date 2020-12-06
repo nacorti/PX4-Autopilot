@@ -33,7 +33,7 @@
 
 #pragma once
 
-#include <mixer/MixerBase/Mixer.hpp>
+#include <mixer/Mixer/Mixer.hpp>
 
 /**
  * Null mixer; returns zero.

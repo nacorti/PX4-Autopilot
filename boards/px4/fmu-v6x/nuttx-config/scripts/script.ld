@@ -156,6 +156,11 @@ SECTIONS
 		*(.gnu.linkonce.r.*)
 		_etext = ABSOLUTE(.);
 
+		/*
+		 * This is a hack to make the newlib libm __errno() call
+		 * use the NuttX get_errno_ptr() function.
+		 */
+		__errno = get_errno_ptr;
 	} > flash
 
 	/*
@@ -204,12 +209,6 @@ SECTIONS
 		. = ALIGN(4);
 		_ebss = ABSOLUTE(.);
 	} > sram
-
-	/* Emit the the D3 power domain section for locating BDMA data */
-
-	.sram4 (NOLOAD) :
-	{
-	} > sram4
 
 	/* Stabs debugging sections. */
 	.stab 0 : { *(.stab) }

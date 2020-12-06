@@ -40,17 +40,17 @@ static constexpr int16_t combine(uint8_t msb, uint8_t lsb)
 	return (msb << 8u) | lsb;
 }
 
-IST8308::IST8308(I2CSPIBusOption bus_option, int bus, int bus_frequency, enum Rotation rotation) :
+IST8308::IST8308(I2CSPIBusOption bus_option, int bus, enum Rotation rotation, int bus_frequency) :
 	I2C(DRV_MAG_DEVTYPE_IST8308, MODULE_NAME, bus, I2C_ADDRESS_DEFAULT, bus_frequency),
 	I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(get_device_id()), bus_option, bus),
-	_px4_mag(get_device_id(), rotation)
+	_px4_mag(get_device_id(), external() ? ORB_PRIO_VERY_HIGH : ORB_PRIO_DEFAULT, rotation)
 {
 	_px4_mag.set_external(external());
 }
 
 IST8308::~IST8308()
 {
-	perf_free(_reset_perf);
+	perf_free(_transfer_perf);
 	perf_free(_bad_register_perf);
 	perf_free(_bad_transfer_perf);
 }
@@ -78,18 +78,18 @@ bool IST8308::Reset()
 void IST8308::print_status()
 {
 	I2CSPIDriverBase::print_status();
-
-	perf_print_counter(_reset_perf);
+	perf_print_counter(_transfer_perf);
 	perf_print_counter(_bad_register_perf);
 	perf_print_counter(_bad_transfer_perf);
+	_px4_mag.print_status();
 }
 
 int IST8308::probe()
 {
-	const uint8_t WAI = RegisterRead(Register::WAI);
+	const uint8_t whoami = RegisterRead(Register::WAI);
 
-	if (WAI != Device_ID) {
-		DEVICE_DEBUG("unexpected WAI 0x%02x", WAI);
+	if (whoami != Device_ID) {
+		DEVICE_DEBUG("unexpected WAI 0x%02x", whoami);
 		return PX4_ERROR;
 	}
 
@@ -98,17 +98,13 @@ int IST8308::probe()
 
 void IST8308::RunImpl()
 {
-	const hrt_abstime now = hrt_absolute_time();
-
 	switch (_state) {
 	case STATE::RESET:
 		// CNTL3: Software Reset
-		RegisterWrite(Register::CNTL3, CNTL3_BIT::SRST);
-		_reset_timestamp = now;
-		_failure_count = 0;
+		RegisterSetAndClearBits(Register::CNTL3, CNTL3_BIT::SRST, 0);
+		_reset_timestamp = hrt_absolute_time();
 		_state = STATE::WAIT_FOR_RESET;
-		perf_count(_reset_perf);
-		ScheduleDelayed(50_ms); // Power On Reset: max 50ms
+		ScheduleDelayed(50_ms); // Power On Reset: max:50ms
 		break;
 
 	case STATE::WAIT_FOR_RESET:
@@ -119,18 +115,18 @@ void IST8308::RunImpl()
 
 			// if reset succeeded then configure
 			_state = STATE::CONFIGURE;
-			ScheduleDelayed(10_ms);
+			ScheduleNow();
 
 		} else {
 			// RESET not complete
-			if (hrt_elapsed_time(&_reset_timestamp) > 1000_ms) {
-				PX4_DEBUG("Reset failed, retrying");
+			if (hrt_elapsed_time(&_reset_timestamp) > 100_ms) {
+				PX4_ERR("Reset failed, retrying");
 				_state = STATE::RESET;
-				ScheduleDelayed(100_ms);
+				ScheduleNow();
 
 			} else {
-				PX4_DEBUG("Reset not complete, check again in 10 ms");
-				ScheduleDelayed(10_ms);
+				PX4_DEBUG("Reset not complete, check again in 50 ms");
+				ScheduleDelayed(50_ms);
 			}
 		}
 
@@ -143,16 +139,9 @@ void IST8308::RunImpl()
 			ScheduleOnInterval(20_ms, 20_ms);
 
 		} else {
-			// CONFIGURE not complete
-			if (hrt_elapsed_time(&_reset_timestamp) > 1000_ms) {
-				PX4_DEBUG("Configure failed, resetting");
-				_state = STATE::RESET;
-
-			} else {
-				PX4_DEBUG("Configure failed, retrying");
-			}
-
-			ScheduleDelayed(100_ms);
+			PX4_DEBUG("Configure failed, retrying");
+			// try again in 50 ms
+			ScheduleDelayed(50_ms);
 		}
 
 		break;
@@ -168,53 +157,41 @@ void IST8308::RunImpl()
 				uint8_t DATAZH;
 			} buffer{};
 
-			bool success = false;
-			uint8_t cmd = static_cast<uint8_t>(Register::STAT);
+			perf_begin(_transfer_perf);
 
-			if (transfer(&cmd, 1, (uint8_t *)&buffer, sizeof(buffer)) == PX4_OK) {
+			bool failure = false;
+			const hrt_abstime timestamp_sample = hrt_absolute_time();
+			const uint8_t cmd = static_cast<uint8_t>(Register::STAT);
 
-				if (buffer.STAT & STAT_BIT::DRDY) {
-					int16_t x = combine(buffer.DATAXH, buffer.DATAXL);
-					int16_t y = combine(buffer.DATAYH, buffer.DATAYL);
-					int16_t z = combine(buffer.DATAZH, buffer.DATAZL);
-
-					// sensor's frame is +x forward, +y right, +z up
-					z = (z == INT16_MIN) ? INT16_MAX : -z; // flip z
-
-					_px4_mag.set_error_count(perf_event_count(_bad_register_perf) + perf_event_count(_bad_transfer_perf));
-					_px4_mag.update(now, x, y, z);
-
-					success = true;
-
-					if (_failure_count > 0) {
-						_failure_count--;
-					}
-				}
-
-			} else {
+			if (transfer(&cmd, 1, (uint8_t *)&buffer, sizeof(buffer)) != PX4_OK) {
 				perf_count(_bad_transfer_perf);
+				failure = true;
 			}
 
-			if (!success) {
-				_failure_count++;
+			perf_end(_transfer_perf);
 
-				// full reset if things are failing consistently
-				if (_failure_count > 10) {
-					Reset();
-					return;
-				}
+			if (!failure && (buffer.STAT && STAT_BIT::DRDY)) {
+				float x = combine(buffer.DATAXH, buffer.DATAXL);
+				float y = combine(buffer.DATAYH, buffer.DATAYL);
+				float z = combine(buffer.DATAZH, buffer.DATAZL);
+
+				// sensor's frame is +x forward, +y right, +z up
+				z = (z == INT16_MIN) ? INT16_MAX : -z; // flip z
+
+				_px4_mag.update(timestamp_sample, x, y, z);
 			}
 
-			if (!success || hrt_elapsed_time(&_last_config_check_timestamp) > 100_ms) {
-				// check configuration registers periodically or immediately following any failure
-				if (RegisterCheck(_register_cfg[_checked_register])) {
-					_last_config_check_timestamp = now;
+			if (failure || hrt_elapsed_time(&_last_config_check_timestamp) > 100_ms) {
+				// check registers incrementally
+				if (RegisterCheck(_register_cfg[_checked_register], true)) {
+					_last_config_check_timestamp = timestamp_sample;
 					_checked_register = (_checked_register + 1) % size_register_cfg;
 
 				} else {
-					// register check failed, force reset
-					perf_count(_bad_register_perf);
-					Reset();
+					// register check failed, force reconfigure
+					PX4_DEBUG("Health check failed, reconfiguring");
+					_state = STATE::CONFIGURE;
+					ScheduleNow();
 				}
 			}
 		}
@@ -225,16 +202,10 @@ void IST8308::RunImpl()
 
 bool IST8308::Configure()
 {
-	// first set and clear all configured register bits
-	for (const auto &reg_cfg : _register_cfg) {
-		RegisterSetAndClearBits(reg_cfg.reg, reg_cfg.set_bits, reg_cfg.clear_bits);
-	}
-
-	// now check that all are configured
 	bool success = true;
 
-	for (const auto &reg_cfg : _register_cfg) {
-		if (!RegisterCheck(reg_cfg)) {
+	for (const auto &reg : _register_cfg) {
+		if (!RegisterCheck(reg)) {
 			success = false;
 		}
 	}
@@ -245,7 +216,7 @@ bool IST8308::Configure()
 	return success;
 }
 
-bool IST8308::RegisterCheck(const register_config_t &reg_cfg)
+bool IST8308::RegisterCheck(const register_config_t &reg_cfg, bool notify)
 {
 	bool success = true;
 
@@ -259,6 +230,15 @@ bool IST8308::RegisterCheck(const register_config_t &reg_cfg)
 	if (reg_cfg.clear_bits && ((reg_value & reg_cfg.clear_bits) != 0)) {
 		PX4_DEBUG("0x%02hhX: 0x%02hhX (0x%02hhX not cleared)", (uint8_t)reg_cfg.reg, reg_value, reg_cfg.clear_bits);
 		success = false;
+	}
+
+	if (!success) {
+		RegisterSetAndClearBits(reg_cfg.reg, reg_cfg.set_bits, reg_cfg.clear_bits);
+
+		if (notify) {
+			perf_count(_bad_register_perf);
+			_px4_mag.increase_error_count();
+		}
 	}
 
 	return success;
@@ -281,9 +261,15 @@ void IST8308::RegisterWrite(Register reg, uint8_t value)
 void IST8308::RegisterSetAndClearBits(Register reg, uint8_t setbits, uint8_t clearbits)
 {
 	const uint8_t orig_val = RegisterRead(reg);
-	uint8_t val = (orig_val & ~clearbits) | setbits;
+	uint8_t val = orig_val;
 
-	if (orig_val != val) {
-		RegisterWrite(reg, val);
+	if (setbits) {
+		val |= setbits;
 	}
+
+	if (clearbits) {
+		val &= ~clearbits;
+	}
+
+	RegisterWrite(reg, val);
 }

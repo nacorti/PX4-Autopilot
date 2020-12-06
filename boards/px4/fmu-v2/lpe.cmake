@@ -20,7 +20,7 @@ px4_add_board(
 		TEL4:/dev/ttyS6
 
 	DRIVERS
-		adc/board_adc
+		adc
 		#barometer # all available barometer drivers
 		barometer/ms5611
 		#batt_smbus

@@ -58,7 +58,7 @@ enum AIRSPEED_COMPENSATION_MODEL {
 };
 
 /**
- * Calculate indicated airspeed (IAS) and correct for friction inside pitot and tube.
+ * Calculate indicated airspeed (IAS).
  *
  * Note that the indicated airspeed is not the true airspeed because it
  * lacks the air density compensation. Use the calc_true_airspeed functions to get
@@ -86,32 +86,34 @@ __EXPORT float calc_IAS_corrected(enum AIRSPEED_COMPENSATION_MODEL pmodel,
 __EXPORT float calc_IAS(float differential_pressure);
 
 /**
- * Calculate true airspeed (TAS) from calibrated airspeed (CAS).
+ * Calculate true airspeed (TAS) from equivalent airspeed (EAS).
  *
- * Note that the true airspeed is NOT the groundspeed, because of the effects of wind.
+ * Note that the true airspeed is NOT the groundspeed, because of the effects of wind
  *
- * @param speed_equivalent current calibrated airspeed
+ * @param speed_equivalent current equivalent airspeed
  * @param pressure_ambient pressure at the side of the tube/airplane
  * @param temperature_celsius air temperature in degrees celcius
  * @return TAS in m/s
  */
-__EXPORT float calc_TAS_from_CAS(float speed_indicated, float pressure_ambient,
+__EXPORT float calc_TAS_from_EAS(float speed_indicated, float pressure_ambient,
 				 float temperature_celsius);
 
 /**
- * Calculate calibrated airspeed (CAS) from indicated airspeed (IAS).
+ * Calculate equivalent airspeed (EAS) from indicated airspeed (IAS).
+ * Note that we neglect the conversion from CAS (calibrated airspeed) to EAS.
  *
  * @param speed_indicated current indicated airspeed
  * @param scale scale from IAS to CAS (accounting for instrument and pitot position erros)
- * @return CAS in m/s
+ * @return EAS in m/s
  */
-__EXPORT float calc_CAS_from_IAS(float speed_indicated, float scale);
+__EXPORT float calc_EAS_from_IAS(float speed_indicated, float scale);
 
 
 /**
- * Directly calculate true airspeed (TAS).
+ * Directly calculate true airspeed (TAS)
  *
- * Here we assume to have no instrument or pitot position error (IAS = CAS).
+ * Here we assume to have no instrument or pitot position error (IAS = CAS),
+ * and neglect the CAS to EAS conversion (CAS = EAS).
  * Note that the true airspeed is NOT the groundspeed, because of the effects of wind.
  *
  * @param total_pressure pressure inside the pitot/prandtl tube
@@ -130,15 +132,16 @@ __EXPORT float calc_TAS(float total_pressure, float static_pressure, float tempe
 __EXPORT float get_air_density(float static_pressure, float temperature_celsius);
 
 /**
- * Calculate calibrated airspeed (CAS) from true airspeed (TAS).
- * It is the inverse function to calc_TAS_from_CAS()
+ * Calculate equivalent airspeed (EAS) from true airspeed (TAS).
+ * It is the inverse function to calc_TAS_from_EAS()
+ *
  *
  * @param speed_true current true airspeed
  * @param pressure_ambient pressure at the side of the tube/airplane
  * @param temperature_celsius air temperature in degrees celcius
- * @return CAS in m/s
+ * @return EAS in m/s
  */
-__EXPORT float calc_CAS_from_TAS(float speed_true, float pressure_ambient,
+__EXPORT float calc_EAS_from_TAS(float speed_true, float pressure_ambient,
 				 float temperature_celsius);
 
 __END_DECLS

@@ -14,7 +14,7 @@ px4_add_board(
 		TEL2:/dev/ttyS2
 		TEL3:/dev/ttyS6
 	DRIVERS
-		adc/board_adc
+		adc
 		barometer/ms5611
 		batt_smbus
 		camera_capture
@@ -29,7 +29,7 @@ px4_add_board(
 		lights/rgbled_ncp5623c
 		magnetometer/bmm150
 		magnetometer/lis3mdl
-		magnetometer/isentek/ist8310
+		magnetometer/ist8310
 		optical_flow # all available optical flow drivers
 		pca9685
 		pwm_input
@@ -81,7 +81,6 @@ px4_add_board(
 		reboot
 		reflect
 		sd_bench
-		system_time
 		top
 		topic_listener
 		tune_control

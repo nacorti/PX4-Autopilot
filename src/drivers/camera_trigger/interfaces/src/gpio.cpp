@@ -25,7 +25,7 @@ void CameraInterfaceGPIO::setup()
 	for (unsigned i = 0, t = 0; i < arraySize(_pins); i++) {
 
 		// Pin range is from 0 to num_gpios - 1
-		if (_pins[i] >= 0 && t < (int)arraySize(_triggers)) {
+		if (_pins[i] >= 0 && t < (int)arraySize(_triggers) && _pins[i] < num_gpios) {
 			uint32_t gpio = io_timer_channel_get_gpio_output(_pins[i]);
 			_triggers[t++] = gpio;
 			px4_arch_configgpio(gpio);

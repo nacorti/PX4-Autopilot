@@ -49,7 +49,6 @@ if(NOT PX4_BOARD MATCHES "px4_io") # TODO: fix this hack (move uORB to platform 
 			Subscription.hpp
 			SubscriptionCallback.hpp
 			SubscriptionInterval.hpp
-			SubscriptionMultiArray.hpp
 			uORB.cpp
 			uORB.h
 			uORBCommon.hpp

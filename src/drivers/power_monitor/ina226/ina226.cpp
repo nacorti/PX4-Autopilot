@@ -210,11 +210,9 @@ INA226::collect()
 {
 	perf_begin(_sample_perf);
 
-	if (_parameter_update_sub.updated()) {
-		// Read from topic to clear updated flag
-		parameter_update_s parameter_update;
-		_parameter_update_sub.copy(&parameter_update);
+	parameter_update_s param_update;
 
+	if (_parameters_sub.copy(&param_update)) {
 		updateParams();
 	}
 

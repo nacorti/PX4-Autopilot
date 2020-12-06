@@ -37,6 +37,10 @@
 
 using namespace time_literals;
 
+#if defined(SPEKTRUM_POWER)
+static bool bind_spektrum(int arg);
+#endif /* SPEKTRUM_POWER */
+
 constexpr char const *RCInput::RC_SCAN_STRING[];
 
 RCInput::RCInput(const char *device) :
@@ -602,7 +606,7 @@ void RCInput::Run()
 }
 
 #if defined(SPEKTRUM_POWER)
-bool RCInput::bind_spektrum(int arg) const
+bool bind_spektrum(int arg)
 {
 	int ret = PX4_ERROR;
 
@@ -648,11 +652,7 @@ int RCInput::custom_command(int argc, char *argv[])
 	const char *verb = argv[0];
 
 	if (!strcmp(verb, "bind")) {
-		uORB::Publication<vehicle_command_s> vehicle_command_pub{ORB_ID(vehicle_command)};
-		vehicle_command_s vcmd{};
-		vcmd.command = vehicle_command_s::VEHICLE_CMD_START_RX_PAIR;
-		vcmd.timestamp = hrt_absolute_time();
-		vehicle_command_pub.publish(vcmd);
+		bind_spektrum(DSMX8_BIND_PULSES);
 		return 0;
 	}
 

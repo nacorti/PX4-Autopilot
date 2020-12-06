@@ -48,24 +48,6 @@
 namespace uORB
 {
 
-template <typename U> class DefaultQueueSize
-{
-private:
-	template <typename T>
-	static constexpr uint8_t get_queue_size(decltype(T::ORB_QUEUE_LENGTH) *)
-	{
-		return T::ORB_QUEUE_LENGTH;
-	}
-
-	template <typename T> static constexpr uint8_t get_queue_size(...)
-	{
-		return 1;
-	}
-
-public:
-	static constexpr unsigned value = get_queue_size<U>(nullptr);
-};
-
 class PublicationBase
 {
 public:
@@ -97,7 +79,7 @@ protected:
 /**
  * uORB publication wrapper class
  */
-template<typename T, uint8_t ORB_QSIZE = DefaultQueueSize<T>::value>
+template<typename T, uint8_t ORB_QSIZE = 1>
 class Publication : public PublicationBase
 {
 public:
@@ -162,5 +144,11 @@ public:
 private:
 	T _data{};
 };
+
+
+template<class T>
+using PublicationQueued = Publication<T, T::ORB_QUEUE_LENGTH>;
+
+
 
 } // namespace uORB

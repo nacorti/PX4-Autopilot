@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2012-2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2012-2018 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,29 +40,22 @@
 PARAM_DEFINE_INT32(CAL_MAG1_ID, 0);
 
 /**
- * Mag 1 priority.
+ * Mag 1 enabled
  *
- * @value -1  Uninitialized
- * @value 0   Disabled
- * @value 1   Min
- * @value 25  Low
- * @value 50  Medium (Default)
- * @value 75  High
- * @value 100 Max
- *
+ * @boolean
  * @category system
  * @group Sensor Calibration
  */
-PARAM_DEFINE_INT32(CAL_MAG1_PRIO, -1);
+PARAM_DEFINE_INT32(CAL_MAG1_EN, 1);
 
 /**
  * Rotation of magnetometer 1 relative to airframe.
  *
- * An internal sensor will force a value of -1, so a GCS
+ * An internal magnetometer will force a value of -1, so a GCS
  * should only attempt to configure the rotation if the value is
  * greater than or equal to zero.
  *
- * @value -1 Internal
+ * @value -1 Internal mag
  * @value 0 No rotation
  * @value 1 Yaw 45°
  * @value 2 Yaw 90°
@@ -105,9 +98,13 @@ PARAM_DEFINE_INT32(CAL_MAG1_PRIO, -1);
  * @value 39 Pitch 315°
  * @value 40 Roll 90°, Pitch 315°
  * @value 41 Roll 270°, Yaw 180°
+ * @value 42 Roll 270°, Yaw 270°
+ * @value 43 Pitch 90°, Yaw 180°
+ * @value 44 Pitch 9°, Yaw 180°
+ * @value 45 Pitch 45°
  *
  * @min -1
- * @max 41
+ * @max 45
  * @reboot_required true
  * @category system
  * @group Sensor Calibration
@@ -161,30 +158,6 @@ PARAM_DEFINE_FLOAT(CAL_MAG1_YSCALE, 1.0f);
  * @group Sensor Calibration
  */
 PARAM_DEFINE_FLOAT(CAL_MAG1_ZSCALE, 1.0f);
-
-/**
- * Magnetometer X-axis off diagonal factor
- *
- * @category system
- * @group Sensor Calibration
- */
-PARAM_DEFINE_FLOAT(CAL_MAG1_XODIAG, 0.0f);
-
-/**
- * Magnetometer Y-axis off diagonal factor
- *
- * @category system
- * @group Sensor Calibration
- */
-PARAM_DEFINE_FLOAT(CAL_MAG1_YODIAG, 0.0f);
-
-/**
- * Magnetometer Z-axis off diagonal factor
- *
- * @category system
- * @group Sensor Calibration
- */
-PARAM_DEFINE_FLOAT(CAL_MAG1_ZODIAG, 0.0f);
 
 /**
 * Coefficient describing linear relationship between

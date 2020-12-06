@@ -70,6 +70,10 @@ except AttributeError:
 
 #include <fastrtps/Domain.h>
 
+@[if version.parse(fastrtps_version) <= version.parse('1.7.2')]@
+#include <fastrtps/utils/eClock.h>
+@[end if]@
+
 #include "@(topic)_Publisher.h"
 
 @(topic)_Publisher::@(topic)_Publisher()
@@ -82,23 +86,21 @@ except AttributeError:
     Domain::removeParticipant(mp_participant);
 }
 
-bool @(topic)_Publisher::init(const std::string& ns)
+bool @(topic)_Publisher::init()
 {
     // Create RTPSParticipant
     ParticipantAttributes PParam;
-@[if version.parse(fastrtps_version) < version.parse('2.0')]@
+@[if version.parse(fastrtps_version[:3]) < version.parse('2.0')]@
     PParam.rtps.builtin.domainId = 0;
 @[else]@
     PParam.domainId = 0;
 @[end if]@
-@[if version.parse(fastrtps_version) <= version.parse('1.8.4')]@
+@[if version.parse(fastrtps_version[:3]) <= version.parse('1.8')]@
     PParam.rtps.builtin.leaseDuration = c_TimeInfinite;
 @[else]@
     PParam.rtps.builtin.discovery_config.leaseDuration = c_TimeInfinite;
 @[end if]@
-    std::string nodeName = ns;
-    nodeName.append("@(topic)_publisher");
-    PParam.rtps.setName(nodeName.c_str());
+    PParam.rtps.setName("@(topic)_publisher");  //You can put here the name you want
     mp_participant = Domain::createParticipant(PParam);
     if(mp_participant == nullptr)
         return false;
@@ -113,19 +115,12 @@ bool @(topic)_Publisher::init(const std::string& ns)
 @[if ros2_distro]@
 @[    if ros2_distro == "ardent"]@
     Wparam.qos.m_partition.push_back("rt");
-    std::string topicName = ns;
-    topicName.append("@(topic)_PubSubTopic");
-    Wparam.topic.topicName = topicName;
+    Wparam.topic.topicName = "@(topic)_PubSubTopic";
 @[    else]@
-    std::string topicName = "rt/";
-    topicName.append(ns);
-    topicName.append("@(topic)_PubSubTopic");
-    Wparam.topic.topicName = topicName;
+    Wparam.topic.topicName = "rt/@(topic)_PubSubTopic";
 @[    end if]@
 @[else]@
-    std::string topicName = ns;
-    topicName.append("@(topic)PubSubTopic");
-    Wparam.topic.topicName = topicName;
+    Wparam.topic.topicName = "@(topic)PubSubTopic";
 @[end if]@
     mp_publisher = Domain::createPublisher(mp_participant, Wparam, static_cast<PublisherListener*>(&m_listener));
     if(mp_publisher == nullptr)
@@ -149,10 +144,10 @@ void @(topic)_Publisher::PubListener::onPublicationMatched(Publisher* pub, Match
     if (is_different_endpoint) {
         if (info.status == MATCHED_MATCHING) {
             n_matched++;
-            std::cout << "\033[0;37m[   micrortps_agent   ]\t@(topic) publisher matched\033[0m" << std::endl;
+            std::cout << " - @(topic) publisher matched" << std::endl;
         } else {
             n_matched--;
-            std::cout << "\033[0;37m[   micrortps_agent   ]\t@(topic) publisher unmatched\033[0m" << std::endl;
+            std::cout << " - @(topic) publisher unmatched" << std::endl;
         }
     }
 }

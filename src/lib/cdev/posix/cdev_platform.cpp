@@ -34,88 +34,68 @@
 
 #include "cdev_platform.hpp"
 
+#include <string>
+#include <map>
+
+#include "vfile.h"
 #include "../CDev.hpp"
 
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/posix.h>
 #include <px4_platform_common/time.h>
 
+using namespace std;
+
 const cdev::px4_file_operations_t cdev::CDev::fops = {};
 
 pthread_mutex_t devmutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t filemutex = PTHREAD_MUTEX_INITIALIZER;
 
-struct px4_dev_t {
-	char *name{nullptr};
-	cdev::CDev *cdev{nullptr};
-
-	px4_dev_t(const char *n, cdev::CDev *c) : cdev(c)
-	{
-		name = strdup(n);
-	}
-
-	~px4_dev_t()
-	{
-		free(name);
-	}
-private:
-	px4_dev_t() = default;
-};
-
-static px4_dev_t *devmap[256] {};
-
-#define PX4_MAX_FD 256
-static cdev::file_t filemap[PX4_MAX_FD] {};
-
-class VFile : public cdev::CDev
-{
-public:
-	VFile(const char *fname, mode_t mode) : cdev::CDev(fname) {}
-	~VFile() override = default;
-
-	ssize_t write(cdev::file_t *handlep, const char *buffer, size_t buflen) override
-	{
-		// ignore what was written, but let pollers know something was written
-		poll_notify(POLLIN);
-		return buflen;
-	}
-};
-
-static cdev::CDev *getDev(const char *path)
-{
-	pthread_mutex_lock(&devmutex);
-
-	for (const auto &dev : devmap) {
-		if (dev && (strcmp(dev->name, path) == 0)) {
-			pthread_mutex_unlock(&devmutex);
-			return dev->cdev;
-		}
-	}
-
-	pthread_mutex_unlock(&devmutex);
-
-	return nullptr;
-}
-
-static cdev::CDev *getFile(int fd)
-{
-	pthread_mutex_lock(&filemutex);
-	cdev::CDev *dev = nullptr;
-
-	if (fd < PX4_MAX_FD && fd >= 0) {
-		dev = filemap[fd].cdev;
-	}
-
-	pthread_mutex_unlock(&filemutex);
-	return dev;
-}
+#define PX4_MAX_FD 350
+static map<string, void *> devmap;
+static cdev::file_t filemap[PX4_MAX_FD] = {};
 
 extern "C" {
+
+	static cdev::CDev *getDev(const char *path)
+	{
+		PX4_DEBUG("CDev::getDev");
+
+		pthread_mutex_lock(&devmutex);
+
+		auto item = devmap.find(path);
+
+		if (item != devmap.end()) {
+			pthread_mutex_unlock(&devmutex);
+			return (cdev::CDev *)item->second;
+		}
+
+		pthread_mutex_unlock(&devmutex);
+
+		return nullptr;
+	}
+
+	static cdev::CDev *get_vdev(int fd)
+	{
+		pthread_mutex_lock(&filemutex);
+		bool valid = (fd < PX4_MAX_FD && fd >= 0 && filemap[fd].vdev);
+		cdev::CDev *dev;
+
+		if (valid) {
+			dev = (cdev::CDev *)(filemap[fd].vdev);
+
+		} else {
+			dev = nullptr;
+		}
+
+		pthread_mutex_unlock(&filemutex);
+		return dev;
+	}
 
 	int register_driver(const char *name, const cdev::px4_file_operations_t *fops, cdev::mode_t mode, void *data)
 	{
 		PX4_DEBUG("CDev::register_driver %s", name);
-		int ret = -ENOSPC;
+		int ret = 0;
 
 		if (name == nullptr || data == nullptr) {
 			return -EINVAL;
@@ -124,27 +104,17 @@ extern "C" {
 		pthread_mutex_lock(&devmutex);
 
 		// Make sure the device does not already exist
-		for (const auto &dev : devmap) {
-			if (dev && (strcmp(dev->name, name) == 0)) {
-				pthread_mutex_unlock(&devmutex);
-				return -EEXIST;
-			}
+		auto item = devmap.find(name);
+
+		if (item != devmap.end()) {
+			pthread_mutex_unlock(&devmutex);
+			return -EEXIST;
 		}
 
-		for (auto &dev : devmap) {
-			if (dev == nullptr) {
-				dev = new px4_dev_t(name, (cdev::CDev *)data);
-				PX4_DEBUG("Registered DEV %s", name);
-				ret = PX4_OK;
-				break;
-			}
-		}
+		devmap[name] = (void *)data;
+		PX4_DEBUG("Registered DEV %s", name);
 
 		pthread_mutex_unlock(&devmutex);
-
-		if (ret != PX4_OK) {
-			PX4_ERR("No free devmap entries - increase devmap size");
-		}
 
 		return ret;
 	}
@@ -160,14 +130,9 @@ extern "C" {
 
 		pthread_mutex_lock(&devmutex);
 
-		for (auto &dev : devmap) {
-			if (dev && (strcmp(name, dev->name) == 0)) {
-				delete dev;
-				dev = nullptr;
-				PX4_DEBUG("Unregistered DEV %s", name);
-				ret = PX4_OK;
-				break;
-			}
+		if (devmap.erase(name) > 0) {
+			PX4_DEBUG("Unregistered DEV %s", name);
+			ret = 0;
 		}
 
 		pthread_mutex_unlock(&devmutex);
@@ -193,15 +158,15 @@ extern "C" {
 
 			// Create the file
 			PX4_DEBUG("Creating virtual file %s", path);
-			dev = new VFile(path, mode);
-			register_driver(path, nullptr, 0666, (void *)dev);
+			dev = cdev::VFile::createFile(path, mode);
 		}
 
 		if (dev) {
+
 			pthread_mutex_lock(&filemutex);
 
 			for (i = 0; i < PX4_MAX_FD; ++i) {
-				if (filemap[i].cdev == nullptr) {
+				if (filemap[i].vdev == nullptr) {
 					filemap[i] = cdev::file_t(flags, dev);
 					break;
 				}
@@ -215,9 +180,10 @@ extern "C" {
 			} else {
 
 				const unsigned NAMELEN = 32;
-				char thread_name[NAMELEN] {};
+				char thread_name[NAMELEN] = {};
 
-				PX4_WARN("%s: exceeded maximum number of file descriptors, accessing %s", thread_name, path);
+				PX4_WARN("%s: exceeded maximum number of file descriptors, accessing %s",
+					 thread_name, path);
 #ifndef __PX4_QURT
 				int nret = pthread_getname_np(pthread_self(), thread_name, NAMELEN);
 
@@ -247,13 +213,13 @@ extern "C" {
 	{
 		int ret;
 
-		cdev::CDev *dev = getFile(fd);
+		cdev::CDev *dev = get_vdev(fd);
 
 		if (dev) {
 			pthread_mutex_lock(&filemutex);
 			ret = dev->close(&filemap[fd]);
 
-			filemap[fd].cdev = nullptr;
+			filemap[fd].vdev = nullptr;
 
 			pthread_mutex_unlock(&filemutex);
 			PX4_DEBUG("px4_close fd = %d", fd);
@@ -273,7 +239,7 @@ extern "C" {
 	{
 		int ret;
 
-		cdev::CDev *dev = getFile(fd);
+		cdev::CDev *dev = get_vdev(fd);
 
 		if (dev) {
 			PX4_DEBUG("px4_read fd = %d", fd);
@@ -294,7 +260,7 @@ extern "C" {
 	{
 		int ret;
 
-		cdev::CDev *dev = getFile(fd);
+		cdev::CDev *dev = get_vdev(fd);
 
 		if (dev) {
 			PX4_DEBUG("px4_write fd = %d", fd);
@@ -316,7 +282,7 @@ extern "C" {
 		PX4_DEBUG("px4_ioctl fd = %d", fd);
 		int ret = 0;
 
-		cdev::CDev *dev = getFile(fd);
+		cdev::CDev *dev = get_vdev(fd);
 
 		if (dev) {
 			ret = dev->ioctl(&filemap[fd], cmd, arg);
@@ -340,7 +306,7 @@ extern "C" {
 		int ret = -1;
 
 		const unsigned NAMELEN = 32;
-		char thread_name[NAMELEN] {};
+		char thread_name[NAMELEN] = {};
 
 #ifndef __PX4_QURT
 		int nret = pthread_getname_np(pthread_self(), thread_name, NAMELEN);
@@ -366,7 +332,7 @@ extern "C" {
 			fds[i].revents = 0;
 			fds[i].priv    = nullptr;
 
-			cdev::CDev *dev = getFile(fds[i].fd);
+			cdev::CDev *dev = get_vdev(fds[i].fd);
 
 			// If fd is valid
 			if (dev) {
@@ -374,7 +340,8 @@ extern "C" {
 				ret = dev->poll(&filemap[fds[i].fd], &fds[i], true);
 
 				if (ret < 0) {
-					PX4_WARN("%s: px4_poll() error: %s", thread_name, strerror(errno));
+					PX4_WARN("%s: px4_poll() error: %s",
+						 thread_name, strerror(errno));
 					break;
 				}
 
@@ -388,6 +355,7 @@ extern "C" {
 		// check for new data
 		if (fd_pollable) {
 			if (timeout > 0) {
+
 				// Get the current time
 				struct timespec ts;
 				// Note, we can't actually use CLOCK_MONOTONIC on macOS
@@ -415,7 +383,7 @@ extern "C" {
 			// go through all fds and count how many have data
 			for (unsigned int i = 0; i < nfds; ++i) {
 
-				cdev::CDev *dev = getFile(fds[i].fd);
+				cdev::CDev *dev = get_vdev(fds[i].fd);
 
 				// If fd is valid
 				if (dev) {
@@ -459,9 +427,7 @@ extern "C" {
 		pthread_mutex_lock(&devmutex);
 
 		for (const auto &dev : devmap) {
-			if (dev) {
-				PX4_INFO_RAW("   %s\n", dev->name);
-			}
+			PX4_INFO_RAW("   %s\n", dev.first.c_str());
 		}
 
 		pthread_mutex_unlock(&devmutex);

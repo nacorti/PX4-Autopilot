@@ -33,7 +33,7 @@
 
 #pragma once
 
-#include <mixer/MixerBase/Mixer.hpp>
+#include <mixer/Mixer/Mixer.hpp>
 
 /**
  * Supported multirotor geometries.
@@ -79,7 +79,8 @@ public:
 	 *				tuned to ensure that rotors never stall at the
 	 * 				low end of their control range.
 	 */
-	MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle, MultirotorGeometry geometry);
+	MultirotorMixer(ControlCallback control_cb, uintptr_t cb_handle, MultirotorGeometry geometry,
+			float roll_scale, float pitch_scale, float yaw_scale, float idle_speed);
 
 	/**
 	 * Constructor (for testing).
@@ -240,6 +241,10 @@ private:
 
 	void update_saturation_status(unsigned index, bool clipping_high, bool clipping_low_roll_pitch, bool clipping_low_yaw);
 
+	float				_roll_scale{1.0f};
+	float				_pitch_scale{1.0f};
+	float				_yaw_scale{1.0f};
+	float				_idle_speed{0.0f};
 	float 				_delta_out_max{0.0f};
 	float 				_thrust_factor{0.0f};
 

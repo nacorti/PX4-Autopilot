@@ -89,7 +89,6 @@ function(px4_add_common_flags)
 		-Wno-missing-field-initializers
 		-Wno-missing-include-dirs # TODO: fix and enable
 		-Wno-unused-parameter
-
 		)
 
 	# compiler specific flags
@@ -116,10 +115,6 @@ function(px4_add_common_flags)
 		if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9)
 			# force color for gcc > 4.9
 			add_compile_options(-fdiagnostics-color=always)
-		endif()
-
-		if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.3)
-			add_compile_options(-Wno-stringop-truncation)
 		endif()
 
 		add_compile_options(

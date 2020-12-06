@@ -84,17 +84,13 @@ namespace drv_pca9685_pwm
 
 #define PCA9685_PWM_CHANNEL_COUNT 16
 #define PCA9685_PWM_RES 4096        //Resolution 4096=12bit
-/* This should be 25000000 ideally,
- * but it seems most chips have its oscillator working at a higher frequency
- * Reference: https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/blob/6664ce936210eea53259b814062009d9569a4213/Adafruit_PWMServoDriver.h#L66 */
-#define PCA9685_CLOCK_INT 26075000.0 //25MHz internal clock
-#ifndef PCA9685_CLOCK_EXT
+#define PCA9685_CLOCK_INT 25000000.0 //25MHz internal clock
+#ifndef PCA9685_CLOCL_EXT
 #define PCA9685_CLOCK_FREQ PCA9685_CLOCK_INT   // use int clk
 #else
 #define PCA9685_CLOCK_FREQ PCA9685_CLOCK_EXT   // use ext clk
 #endif
 
-#define PCA9685_DEVICE_BASE_PATH	"/dev/pca9685"
 #define PWM_DEFAULT_FREQUENCY 50    // default pwm frequency
 
 //! Main class that exports features for PCA9685 chip
@@ -103,6 +99,8 @@ class PCA9685 : public device::I2C
 public:
 	PCA9685(int bus, int addr);
 
+	int Start();
+
 	int Stop();
 
 	/*
@@ -110,43 +108,19 @@ public:
 	 */
 	int updatePWM(const uint16_t *outputs, unsigned num_outputs);
 
-	int setFreq(float freq);
+	int setFreq(int freq);
 
 	~PCA9685() override = default;
 
-	int initReg();
+	int init() override;
 
 	inline float getFrequency() {return _Freq;}
-
-	/*
-	 * disable all of the output
-	 */
-	void disableAllOutput();
-
-	/*
-	* turn off oscillator
-	*/
-	void stopOscillator();
-
-	/*
-	 * turn on oscillator
-	 */
-	void startOscillator();
-
-	/*
-	 * turn on output
-	 */
-	void triggerRestart();
 
 protected:
 	int probe() override;
 
-#ifdef PCA9685_CLOCL_EXT
-	static const uint8_t DEFAULT_MODE1_CFG = 0x70;  // Auto-Increment, Sleep, EXTCLK
-#else
-	static const uint8_t DEFAULT_MODE1_CFG = 0x30;  // Auto-Increment, Sleep
-#endif
-	static const uint8_t DEFAULT_MODE2_CFG = 0x04;  // totem pole
+	static const uint8_t DEFAULT_MODE1_CFG = 0x20;
+	static const uint8_t DEFAULT_MODE2_CFG = 0x04;
 
 	float _Freq = PWM_DEFAULT_FREQUENCY;
 
@@ -163,10 +137,25 @@ protected:
 	void setPWM(uint8_t channel_count, const uint16_t *value);
 
 	/*
+	 * disable all of the output
+	 */
+	void disableAllOutput();
+
+	/*
 	 * set clock divider
+	 * this func has Super Cow Powers
 	 */
 	void setDivider(uint8_t value);
 
+	/*
+	 * turn off oscillator
+	 */
+	void stopOscillator();
+
+	/*
+	 * restart output
+	 */
+	void restartOscillator();
 private:
 
 };

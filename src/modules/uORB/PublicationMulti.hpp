@@ -50,7 +50,7 @@ namespace uORB
 /**
  * Base publication multi wrapper class
  */
-template<typename T, uint8_t QSIZE = DefaultQueueSize<T>::value>
+template<typename T, uint8_t QSIZE = 1>
 class PublicationMulti : public PublicationBase
 {
 public:
@@ -59,20 +59,23 @@ public:
 	 * Constructor
 	 *
 	 * @param meta The uORB metadata (usually from the ORB_ID() macro) for the topic.
+	 * @param priority The priority for multi pub/sub, 0 means don't publish as multi
 	 */
-	PublicationMulti(ORB_ID id) :
-		PublicationBase(id)
+	PublicationMulti(ORB_ID id, ORB_PRIO priority = ORB_PRIO_DEFAULT) :
+		PublicationBase(id),
+		_priority(priority)
 	{}
 
-	PublicationMulti(const orb_metadata *meta) :
-		PublicationBase(static_cast<ORB_ID>(meta->o_id))
+	PublicationMulti(const orb_metadata *meta, ORB_PRIO priority = ORB_PRIO_DEFAULT) :
+		PublicationBase(static_cast<ORB_ID>(meta->o_id)),
+		_priority(priority)
 	{}
 
 	bool advertise()
 	{
 		if (!advertised()) {
 			int instance = 0;
-			_handle = orb_advertise_multi_queue(get_topic(), nullptr, &instance, QSIZE);
+			_handle = orb_advertise_multi_queue(get_topic(), nullptr, &instance, _priority, QSIZE);
 		}
 
 		return advertised();
@@ -90,6 +93,9 @@ public:
 
 		return (orb_publish(get_topic(), _handle, &data) == PX4_OK);
 	}
+
+protected:
+	const ORB_PRIO _priority;
 };
 
 /**
@@ -103,9 +109,14 @@ public:
 	 * Constructor
 	 *
 	 * @param meta The uORB metadata (usually from the ORB_ID() macro) for the topic.
+	 * @param priority The priority for multi pub
 	 */
-	PublicationMultiData(ORB_ID id) : PublicationMulti<T>(id) {}
-	PublicationMultiData(const orb_metadata *meta) : PublicationMulti<T>(meta) {}
+	PublicationMultiData(ORB_ID id, ORB_PRIO priority = ORB_PRIO_DEFAULT) :
+		PublicationMulti<T>(id, priority)
+	{}
+	PublicationMultiData(const orb_metadata *meta, ORB_PRIO priority = ORB_PRIO_DEFAULT) :
+		PublicationMulti<T>(meta, priority)
+	{}
 
 	T	&get() { return _data; }
 	void	set(const T &data) { _data = data; }
@@ -121,5 +132,9 @@ public:
 private:
 	T _data{};
 };
+
+
+template<class T>
+using PublicationQueuedMulti = PublicationMulti<T, T::ORB_QUEUE_LENGTH>;
 
 } // namespace uORB

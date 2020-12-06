@@ -11,22 +11,18 @@ px4_add_board(
 	TESTING
 	UAVCAN_INTERFACES 1
 	SERIAL_PORTS
-		# IO DEBUG:/dev/ttyS0
+		GPS1:/dev/ttyS3
 		TEL1:/dev/ttyS1
 		TEL2:/dev/ttyS2
-		GPS1:/dev/ttyS3
-		# PX4IO:/dev/ttyS4
-		# CONSOLE:/dev/tty5
-		# OSD:/dev/tty6
 	DRIVERS
-		adc/board_adc
+		adc
 		barometer # all available barometer drivers
 		batt_smbus
 		camera_capture
 		camera_trigger
 		differential_pressure # all available differential pressure drivers
 		distance_sensor # all available distance sensor drivers
-		dshot
+		#dshot
 		gps
 		#imu # all available imu drivers
 		imu/invensense/icm20602
@@ -48,7 +44,6 @@ px4_add_board(
 		pwm_out
 		px4io
 		roboclaw
-		rpm
 		tap_esc
 		telemetry # all available telemetry drivers
 		test_ppm
@@ -62,7 +57,6 @@ px4_add_board(
 		commander
 		dataman
 		ekf2
-		esc_battery
 		events
 		fw_att_control
 		fw_pos_control_l1
@@ -90,7 +84,6 @@ px4_add_board(
 		dmesg
 		dumpfile
 		esc_calib
-		gpio
 		hardfault_log
 		i2cdetect
 		led_control
@@ -105,7 +98,6 @@ px4_add_board(
 		reboot
 		reflect
 		sd_bench
-		system_time
 		tests # tests and test runner
 		top
 		topic_listener
@@ -114,7 +106,6 @@ px4_add_board(
 		ver
 		work_queue
 	EXAMPLES
-		fake_magnetometer
 		fixedwing_control # Tutorial code from https://px4.io/dev/example_fixedwing_control
 		hello
 		hwtest # Hardware test

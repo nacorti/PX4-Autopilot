@@ -52,7 +52,6 @@ LPS33HW::print_usage()
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, true);
 	PRINT_MODULE_USAGE_PARAMS_I2C_ADDRESS(0x5D);
-	PRINT_MODULE_USAGE_PARAMS_I2C_KEEP_RUNNING_FLAG();
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 }
 
@@ -79,7 +78,7 @@ I2CSPIDriverBase *LPS33HW::instantiate(const BusCLIArguments &cli, const BusInst
 		return nullptr;
 	}
 
-	LPS33HW *dev = new LPS33HW(iterator.configuredBusOption(), iterator.bus(), interface, cli.keep_running);
+	LPS33HW *dev = new LPS33HW(iterator.configuredBusOption(), iterator.bus(), interface);
 
 	if (dev == nullptr) {
 		delete interface;
@@ -101,7 +100,6 @@ extern "C" int lps33hw_main(int argc, char *argv[])
 	cli.i2c_address = 0x5D;
 	cli.default_i2c_frequency = 400000;
 	cli.default_spi_frequency = 10 * 1000 * 1000;
-	cli.support_keep_running = true;
 
 	const char *verb = cli.parseDefaultArguments(argc, argv);
 

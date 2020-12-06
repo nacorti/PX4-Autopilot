@@ -51,7 +51,6 @@
 #include <uORB/Publication.hpp>
 
 using namespace matrix;
-using namespace time_literals;
 
 VtolAttitudeControl::VtolAttitudeControl() :
 	WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl),
@@ -183,7 +182,7 @@ VtolAttitudeControl::handle_command()
 			command_ack.target_system = _vehicle_cmd.source_system;
 			command_ack.target_component = _vehicle_cmd.source_component;
 
-			uORB::Publication<vehicle_command_ack_s> command_ack_pub{ORB_ID(vehicle_command_ack)};
+			uORB::PublicationQueued<vehicle_command_ack_s> command_ack_pub{ORB_ID(vehicle_command_ack)};
 			command_ack_pub.publish(command_ack);
 		}
 	}
@@ -342,19 +341,6 @@ VtolAttitudeControl::Run()
 		exit_and_cleanup();
 		return;
 	}
-
-	const hrt_abstime now = hrt_absolute_time();
-
-#if !defined(ENABLE_LOCKSTEP_SCHEDULER)
-
-	// prevent excessive scheduling (> 500 Hz)
-	if (now - _last_run_timestamp < 2_ms) {
-		return;
-	}
-
-#endif // !ENABLE_LOCKSTEP_SCHEDULER
-
-	_last_run_timestamp = now;
 
 	if (!_initialized) {
 		parameters_update();  // initialize parameter cache

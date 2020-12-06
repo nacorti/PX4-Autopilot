@@ -8,11 +8,9 @@ px4_add_board(
 	LABEL default
 	PLATFORM posix
 	ARCHITECTURE cortex-a53
-	ROMFSROOT px4fmu_common
 	TOOLCHAIN arm-linux-gnueabihf
 	TESTING
 	DRIVERS
-		adc/ads1115
 		#barometer # all available barometer drivers
 		barometer/ms5611
 		batt_smbus
@@ -44,7 +42,7 @@ px4_add_board(
 		fw_pos_control_l1
 		land_detector
 		landing_target_estimator
-		load_mon
+		#load_mon
 		local_position_estimator
 		logger
 		mavlink
@@ -72,7 +70,6 @@ px4_add_board(
 		perf
 		pwm
 		sd_bench
-		system_time
 		shutdown
 		tests # tests and test runner
 		#top

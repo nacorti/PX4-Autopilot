@@ -33,7 +33,7 @@
 
 #pragma once
 
-#include <mixer/MixerBase/Mixer.hpp>
+#include <mixer/Mixer/Mixer.hpp>
 
 /** simple channel scaler */
 struct mixer_scaler_s {

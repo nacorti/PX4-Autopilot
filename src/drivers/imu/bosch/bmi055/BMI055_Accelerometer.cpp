@@ -43,10 +43,10 @@ namespace Bosch::BMI055::Accelerometer
 BMI055_Accelerometer::BMI055_Accelerometer(I2CSPIBusOption bus_option, int bus, uint32_t device, enum Rotation rotation,
 		int bus_frequency, spi_mode_e spi_mode, spi_drdy_gpio_t drdy_gpio) :
 	BMI055(DRV_ACC_DEVTYPE_BMI055, "BMI055_Accelerometer", bus_option, bus, device, spi_mode, bus_frequency, drdy_gpio),
-	_px4_accel(get_device_id(), rotation)
+	_px4_accel(get_device_id(), ORB_PRIO_DEFAULT, rotation)
 {
 	if (drdy_gpio != 0) {
-		_drdy_missed_perf = perf_alloc(PC_COUNT, MODULE_NAME"_accel: DRDY missed");
+		_drdy_interval_perf = perf_alloc(PC_INTERVAL, MODULE_NAME"_accel: DRDY interval");
 	}
 
 	ConfigureSampleRate(_px4_accel.get_max_rate_hz());
@@ -59,7 +59,7 @@ BMI055_Accelerometer::~BMI055_Accelerometer()
 	perf_free(_fifo_empty_perf);
 	perf_free(_fifo_overflow_perf);
 	perf_free(_fifo_reset_perf);
-	perf_free(_drdy_missed_perf);
+	perf_free(_drdy_interval_perf);
 }
 
 void BMI055_Accelerometer::exit_and_cleanup()
@@ -72,14 +72,14 @@ void BMI055_Accelerometer::print_status()
 {
 	I2CSPIDriverBase::print_status();
 
-	PX4_INFO("FIFO empty interval: %d us (%.1f Hz)", _fifo_empty_interval_us, 1e6 / _fifo_empty_interval_us);
+	PX4_INFO("FIFO empty interval: %d us (%.3f Hz)", _fifo_empty_interval_us, 1e6 / _fifo_empty_interval_us);
 
 	perf_print_counter(_bad_register_perf);
 	perf_print_counter(_bad_transfer_perf);
 	perf_print_counter(_fifo_empty_perf);
 	perf_print_counter(_fifo_overflow_perf);
 	perf_print_counter(_fifo_reset_perf);
-	perf_print_counter(_drdy_missed_perf);
+	perf_print_counter(_drdy_interval_perf);
 }
 
 int BMI055_Accelerometer::probe()
@@ -103,7 +103,8 @@ void BMI055_Accelerometer::RunImpl()
 		// BGW_SOFTRESET: Writing a value of 0xB6 to this register resets the sensor.
 		RegisterWrite(Register::BGW_SOFTRESET, 0xB6);
 		_reset_timestamp = now;
-		_failure_count = 0;
+		_consecutive_failures = 0;
+		_total_failures = 0;
 		_state = STATE::WAIT_FOR_RESET;
 		ScheduleDelayed(25_ms);
 		break;
@@ -116,7 +117,7 @@ void BMI055_Accelerometer::RunImpl()
 
 		} else {
 			// RESET not complete
-			if (hrt_elapsed_time(&_reset_timestamp) > 1000_ms) {
+			if (hrt_elapsed_time(&_reset_timestamp) > 100_ms) {
 				PX4_DEBUG("Reset failed, retrying");
 				_state = STATE::RESET;
 				ScheduleDelayed(100_ms);
@@ -138,7 +139,7 @@ void BMI055_Accelerometer::RunImpl()
 				_data_ready_interrupt_enabled = true;
 
 				// backup schedule as a watchdog timeout
-				ScheduleDelayed(100_ms);
+				ScheduleDelayed(10_ms);
 
 			} else {
 				_data_ready_interrupt_enabled = false;
@@ -157,7 +158,7 @@ void BMI055_Accelerometer::RunImpl()
 				PX4_DEBUG("Configure failed, retrying");
 			}
 
-			ScheduleDelayed(100_ms);
+			ScheduleDelayed(10_ms);
 		}
 
 		break;
@@ -165,8 +166,8 @@ void BMI055_Accelerometer::RunImpl()
 	case STATE::FIFO_READ: {
 			if (_data_ready_interrupt_enabled) {
 				// scheduled from interrupt if _drdy_fifo_read_samples was set
-				if (_drdy_fifo_read_samples.fetch_and(0) != _fifo_samples) {
-					perf_count(_drdy_missed_perf);
+				if (_drdy_fifo_read_samples.fetch_and(0) == _fifo_accel_samples) {
+					perf_count_interval(_drdy_interval_perf, now);
 				}
 
 				// push backup schedule back
@@ -185,7 +186,7 @@ void BMI055_Accelerometer::RunImpl()
 				const uint8_t fifo_frame_counter = FIFO_STATUS & FIFO_STATUS_BIT::fifo_frame_counter;
 
 				if (fifo_frame_counter > FIFO_MAX_SAMPLES) {
-					// not technically an overflow, but more samples than we expected or can publish
+					// not necessarily an actual FIFO overflow, but more samples than we expected or can publish
 					FIFOReset();
 					perf_count(_fifo_overflow_perf);
 
@@ -195,25 +196,23 @@ void BMI055_Accelerometer::RunImpl()
 				} else if (fifo_frame_counter >= 1) {
 					if (FIFORead(now, fifo_frame_counter)) {
 						success = true;
-
-						if (_failure_count > 0) {
-							_failure_count--;
-						}
+						_consecutive_failures = 0;
 					}
 				}
 			}
 
 			if (!success) {
-				_failure_count++;
+				_consecutive_failures++;
+				_total_failures++;
 
 				// full reset if things are failing consistently
-				if (_failure_count > 10) {
+				if (_consecutive_failures > 100 || _total_failures > 1000) {
 					Reset();
 					return;
 				}
 			}
 
-			if (!success || hrt_elapsed_time(&_last_config_check_timestamp) > 100_ms) {
+			if (!success || hrt_elapsed_time(&_last_config_check_timestamp) > 10_ms) {
 				// check configuration registers periodically or immediately following any failure
 				if (RegisterCheck(_register_cfg[_checked_register])) {
 					_last_config_check_timestamp = now;
@@ -275,12 +274,12 @@ void BMI055_Accelerometer::ConfigureSampleRate(int sample_rate)
 	const float min_interval = FIFO_SAMPLE_DT;
 	_fifo_empty_interval_us = math::max(roundf((1e6f / (float)sample_rate) / min_interval) * min_interval, min_interval);
 
-	_fifo_samples = math::min((float)_fifo_empty_interval_us / (1e6f / RATE), (float)FIFO_MAX_SAMPLES);
+	_fifo_accel_samples = math::min((float)_fifo_empty_interval_us / (1e6f / ACCEL_RATE), (float)FIFO_MAX_SAMPLES);
 
-	// recompute FIFO empty interval (us) with actual sample limit
-	_fifo_empty_interval_us = _fifo_samples * (1e6f / RATE);
+	// recompute FIFO empty interval (us) with actual accel sample limit
+	_fifo_empty_interval_us = _fifo_accel_samples * (1e6f / ACCEL_RATE);
 
-	ConfigureFIFOWatermark(_fifo_samples);
+	ConfigureFIFOWatermark(_fifo_accel_samples);
 }
 
 void BMI055_Accelerometer::ConfigureFIFOWatermark(uint8_t samples)
@@ -323,9 +322,9 @@ int BMI055_Accelerometer::DataReadyInterruptCallback(int irq, void *context, voi
 
 void BMI055_Accelerometer::DataReady()
 {
-	uint32_t expected = 0;
+	uint8_t expected = 0;
 
-	if (_drdy_fifo_read_samples.compare_exchange(&expected, _fifo_samples)) {
+	if (_drdy_fifo_read_samples.compare_exchange(&expected, _fifo_accel_samples)) {
 		ScheduleNow();
 	}
 }
@@ -378,7 +377,7 @@ uint8_t BMI055_Accelerometer::RegisterRead(Register reg)
 
 void BMI055_Accelerometer::RegisterWrite(Register reg, uint8_t value)
 {
-	uint8_t cmd[2] { (uint8_t)reg, value };
+	uint8_t cmd[2] {(uint8_t)reg, value};
 	transfer(cmd, cmd, sizeof(cmd));
 }
 
@@ -456,14 +455,10 @@ void BMI055_Accelerometer::FIFOReset()
 void BMI055_Accelerometer::UpdateTemperature()
 {
 	// The slope of the temperature sensor is 0.5K/LSB, its center temperature is 23°C [(ACC 0x08) temp = 0x00].
-	// The register contains the current chip temperature represented in two’s complement format.
-	float temperature = static_cast<int8_t>(RegisterRead(Register::ACCD_TEMP)) * 0.5f + 23.f;
+	float temperature = RegisterRead(Register::ACCD_TEMP) * 0.5f + 23.f;
 
 	if (PX4_ISFINITE(temperature)) {
 		_px4_accel.set_temperature(temperature);
-
-	} else {
-		perf_count(_bad_transfer_perf);
 	}
 }
 

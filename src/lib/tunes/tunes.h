@@ -58,12 +58,6 @@ class Tunes
 public:
 	enum class NoteMode {NORMAL, LEGATO, STACCATO};
 
-	enum class Status {
-		Continue = 1,
-		Stop = 0,
-		Error = -1,
-	};
-
 	/**
 	 * Constructor with the default parameters set to:
 	 * default_tempo: TUNE_DEFAULT_TEMPO
@@ -105,7 +99,7 @@ public:
 	 * @param  silence   return silence duration (us)
 	 * @return           -1 for error, 0 for play one tone and 1 for continue a sequence
 	 */
-	Tunes::Status get_next_note(unsigned &frequency, unsigned &duration, unsigned &silence);
+	int get_next_note(unsigned &frequency, unsigned &duration, unsigned &silence);
 
 	/**
 	 * Get next note in the current tune, which has been provided by either
@@ -116,8 +110,8 @@ public:
 	 * @param  volume    return the volume level of the note (between 0-100)
 	 * @return           -1 for no tune available/error, 0 to not play anything and 1 to play
 	 */
-	Tunes::Status get_next_note(unsigned &frequency, unsigned &duration,
-				    unsigned &silence, uint8_t &volume);
+	int get_next_note(unsigned &frequency, unsigned &duration,
+			  unsigned &silence, uint8_t &volume);
 
 	/**
 	 *  Get the number of default tunes. This is useful for when a tune is
@@ -188,9 +182,9 @@ private:
 	 */
 	void reset(bool repeat_flag);
 
-	Tunes::Status tune_end();
+	int tune_end();
 
-	Tunes::Status tune_error();
+	int tune_error();
 
 	static const char *const  _default_tunes[];
 	static const bool         _default_tunes_interruptable[];

@@ -49,6 +49,7 @@
 #include <unistd.h>
 
 #include <drivers/device/i2c.h>
+#include <drivers/drv_mag.h>
 #include <drivers/drv_device.h>
 
 #include "board_config.h"

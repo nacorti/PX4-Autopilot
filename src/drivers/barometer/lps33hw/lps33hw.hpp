@@ -55,7 +55,7 @@ using ST_LPS33HW::Register;
 class LPS33HW : public I2CSPIDriver<LPS33HW>
 {
 public:
-	LPS33HW(I2CSPIBusOption bus_option, int bus, device::Device *interface, bool keep_retrying);
+	LPS33HW(I2CSPIBusOption bus_option, int bus, device::Device *interface);
 	virtual ~LPS33HW();
 
 	static I2CSPIDriverBase *instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
@@ -69,13 +69,7 @@ public:
 
 private:
 
-	enum class State {
-		Detect = 0,
-		Reset,
-		WaitForReset,
-		Running
-	};
-
+	void			start();
 	int			reset();
 
 	int			RegisterRead(Register reg, uint8_t &val);
@@ -89,8 +83,6 @@ private:
 
 	perf_counter_t		_sample_perf;
 	perf_counter_t		_comms_errors;
-	const bool		_keep_retrying;
-	State			_state{State::Detect};
 };
 
 } // namespace lps33hw

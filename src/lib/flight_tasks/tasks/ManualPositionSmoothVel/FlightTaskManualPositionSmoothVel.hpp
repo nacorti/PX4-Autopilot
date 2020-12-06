@@ -53,7 +53,7 @@ public:
 
 	virtual ~FlightTaskManualPositionSmoothVel() = default;
 
-	bool activate(const vehicle_local_position_setpoint_s &last_setpoint) override;
+	bool activate(vehicle_local_position_setpoint_s last_setpoint) override;
 	void reActivate() override;
 
 protected:
@@ -73,6 +73,8 @@ protected:
 				       )
 
 private:
+	void checkSetpoints(vehicle_local_position_setpoint_s &setpoints);
+
 	void _updateTrajConstraints();
 	void _updateTrajConstraintsXY();
 	void _updateTrajConstraintsZ();

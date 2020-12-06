@@ -49,11 +49,12 @@
 #include "MulticopterLandDetector.h"
 #include "RoverLandDetector.h"
 #include "VtolLandDetector.h"
-#include "AirshipLandDetector.h"
 
 
 namespace land_detector
 {
+
+extern "C" __EXPORT int land_detector_main(int argc, char *argv[]);
 
 static char _currentMode[12];
 
@@ -77,9 +78,6 @@ int LandDetector::task_spawn(int argc, char *argv[])
 
 	} else if (strcmp(argv[1], "rover") == 0) {
 		obj = new RoverLandDetector();
-
-	} else if (strcmp(argv[1], "airship") == 0) {
-		obj = new AirshipLandDetector();
 
 	} else {
 		print_usage("unknown mode");
@@ -142,12 +140,13 @@ The module runs periodically on the HP work queue.
 
 	PRINT_MODULE_USAGE_NAME("land_detector", "system");
 	PRINT_MODULE_USAGE_COMMAND_DESCR("start", "Start the background task");
-	PRINT_MODULE_USAGE_ARG("fixedwing|multicopter|vtol|rover|airship", "Select vehicle type", false);
+	PRINT_MODULE_USAGE_ARG("fixedwing|multicopter|vtol|rover", "Select vehicle type", false);
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 	return 0;
 }
 
-extern "C" __EXPORT int land_detector_main(int argc, char *argv[])
+
+int land_detector_main(int argc, char *argv[])
 {
 	return LandDetector::main(argc, argv);
 }

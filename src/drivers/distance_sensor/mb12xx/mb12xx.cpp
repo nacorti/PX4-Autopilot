@@ -56,6 +56,7 @@
 #include <containers/Array.hpp>
 #include <drivers/device/device.h>
 #include <drivers/device/i2c.h>
+#include <drivers/device/ringbuffer.h>
 #include <drivers/drv_hrt.h>
 #include <drivers/drv_range_finder.h>
 #include <perf/perf_counter.h>
@@ -232,7 +233,7 @@ MB12XX::collect()
 	report.variance         = 0.0f;
 
 	int instance_id;
-	orb_publish_auto(ORB_ID(distance_sensor), &_distance_sensor_topic, &report, &instance_id);
+	orb_publish_auto(ORB_ID(distance_sensor), &_distance_sensor_topic, &report, &instance_id, ORB_PRIO_DEFAULT);
 
 	// Begin the next measurement.
 	if (measure() != PX4_OK) {

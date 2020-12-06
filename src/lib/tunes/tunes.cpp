@@ -42,6 +42,10 @@
 #include <ctype.h>
 #include <errno.h>
 
+#define TUNE_CONTINUE 1
+#define TUNE_ERROR   -1
+#define TUNE_STOP     0
+
 #define BEAT_TIME_CONVERSION_MS (60 * 1000 * 4)
 #define BEAT_TIME_CONVERSION_US BEAT_TIME_CONVERSION_MS * 1000
 #define BEAT_TIME_CONVERSION    BEAT_TIME_CONVERSION_US
@@ -149,9 +153,10 @@ void Tunes::set_string(const char *const string, uint8_t volume)
 	}
 }
 
-Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsigned &silence, uint8_t &volume)
+int Tunes::get_next_note(unsigned &frequency, unsigned &duration,
+			 unsigned &silence, uint8_t &volume)
 {
-	Tunes::Status ret = get_next_note(frequency, duration, silence);
+	int ret = get_next_note(frequency, duration, silence);
 
 	// Check if note should not be heard -> adjust volume to 0 to be safe.
 	if (frequency == 0 || duration == 0) {
@@ -164,7 +169,8 @@ Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsi
 	return ret;
 }
 
-Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsigned &silence)
+int Tunes::get_next_note(unsigned &frequency, unsigned &duration,
+			 unsigned &silence)
 {
 	// Return the values for frequency and duration if the custom msg was received.
 	if (_using_custom_msg) {
@@ -172,7 +178,7 @@ Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsi
 		duration  = _duration;
 		frequency = _frequency;
 		silence   = _silence;
-		return Tunes::Status::Continue;
+		return TUNE_CONTINUE;
 	}
 
 	// Make sure we still have a tune.
@@ -268,7 +274,7 @@ Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsi
 			frequency = 0;
 			duration = 0;
 			silence = rest_duration(next_number(), next_dots());
-			return Tunes::Status::Continue;
+			return TUNE_CONTINUE;
 
 		case 'T': {	// Change tempo.
 				unsigned nt = next_number();
@@ -293,7 +299,7 @@ Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsi
 			if (note == 0) {
 				// This is a rest - pause for the current note length.
 				silence = rest_duration(_note_length, next_dots());
-				return Tunes::Status::Continue;
+				return TUNE_CONTINUE;
 			}
 
 			break;
@@ -344,29 +350,29 @@ Tunes::Status Tunes::get_next_note(unsigned &frequency, unsigned &duration, unsi
 
 	// Compute the note frequency.
 	frequency = note_to_frequency(note);
-	return Tunes::Status::Continue;
+	return TUNE_CONTINUE;
 }
 
-Tunes::Status Tunes::tune_end()
+int Tunes::tune_end()
 {
 	// Restore intial parameters.
 	reset(_repeat);
 
 	// Stop or restart the tune.
 	if (_repeat) {
-		return Tunes::Status::Continue;
+		return TUNE_CONTINUE;
 
 	} else {
-		return Tunes::Status::Stop;
+		return TUNE_STOP;
 	}
 }
 
-Tunes::Status Tunes::tune_error()
+int Tunes::tune_error()
 {
 	// The tune appears to be bad (unexpected EOF, bad character, etc.).
 	_repeat = false;	// Don't loop on error.
 	reset(_repeat);
-	return Tunes::Status::Error;
+	return TUNE_ERROR;
 }
 
 uint32_t Tunes::note_to_frequency(unsigned note) const

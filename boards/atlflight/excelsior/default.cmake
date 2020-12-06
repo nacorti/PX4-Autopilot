@@ -102,7 +102,6 @@ px4_add_board(
 		pwm
 		sd_bench
 		shutdown
-		system_time
 		#tests # tests and test runner
 		#top
 		topic_listener

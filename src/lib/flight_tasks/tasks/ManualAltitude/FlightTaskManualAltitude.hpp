@@ -39,16 +39,15 @@
 
 #pragma once
 
-#include "FlightTask.hpp"
-#include "Sticks.hpp"
+#include "FlightTaskManual.hpp"
 #include <lib/ecl/AlphaFilter/AlphaFilter.hpp>
 
-class FlightTaskManualAltitude : public FlightTask
+class FlightTaskManualAltitude : public FlightTaskManual
 {
 public:
-	FlightTaskManualAltitude();
+	FlightTaskManualAltitude() = default;
 	virtual ~FlightTaskManualAltitude() = default;
-	bool activate(const vehicle_local_position_setpoint_s &last_setpoint) override;
+	bool activate(vehicle_local_position_setpoint_s last_setpoint) override;
 	bool updateInitialize() override;
 	bool update() override;
 
@@ -72,10 +71,7 @@ protected:
 	 */
 	void _updateAltitudeLock();
 
-	Sticks _sticks;
-	bool _sticks_data_required = true; ///< let inherited task-class define if it depends on stick data
-
-	DEFINE_PARAMETERS_CUSTOM_PARENT(FlightTask,
+	DEFINE_PARAMETERS_CUSTOM_PARENT(FlightTaskManual,
 					(ParamFloat<px4::params::MPC_HOLD_MAX_Z>) _param_mpc_hold_max_z,
 					(ParamInt<px4::params::MPC_ALT_MODE>) _param_mpc_alt_mode,
 					(ParamFloat<px4::params::MPC_HOLD_MAX_XY>) _param_mpc_hold_max_xy,

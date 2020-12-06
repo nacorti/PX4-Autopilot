@@ -49,10 +49,12 @@ public:
 	FlightTaskAutoLineSmoothVel() = default;
 	virtual ~FlightTaskAutoLineSmoothVel() = default;
 
-	bool activate(const vehicle_local_position_setpoint_s &last_setpoint) override;
+	bool activate(vehicle_local_position_setpoint_s last_setpoint) override;
 	void reActivate() override;
 
 protected:
+
+	void checkSetpoints(vehicle_local_position_setpoint_s &setpoints);
 
 	/** Reset position or velocity setpoints in case of EKF reset event */
 	void _ekfResetHandlerPositionXY() override;

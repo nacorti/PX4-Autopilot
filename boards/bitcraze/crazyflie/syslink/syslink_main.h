@@ -38,7 +38,7 @@
 #include <battery/battery.h>
 
 #include <drivers/device/device.h>
-#include "ringbuffer.h"
+#include <drivers/device/ringbuffer.h>
 
 #include <uORB/PublicationMulti.hpp>
 #include <uORB/topics/parameter_update.h>
@@ -51,6 +51,7 @@
 using namespace time_literals;
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
 
 typedef enum {
 	BAT_DISCHARGING = 0,
@@ -81,6 +82,7 @@ public:
 	int txrate;
 
 private:
+
 	friend class SyslinkBridge;
 	friend class SyslinkMemory;
 
@@ -151,6 +153,7 @@ private:
 	static int task_main_trampoline(int argc, char *argv[]);
 
 	void task_main();
+
 };
 
 
@@ -171,9 +174,11 @@ public:
 	void pipe_message(crtp_message_t *msg);
 
 protected:
+
 	virtual pollevent_t poll_state(struct file *filp);
 
 private:
+
 	Syslink *_link;
 
 	// Stores data that was received from syslink but not yet read by another driver
@@ -181,6 +186,7 @@ private:
 
 	crtp_message_t _msg_to_send;
 	int _msg_to_send_size_remaining;
+
 };
 
 
@@ -213,4 +219,5 @@ private:
 	int write(int i, uint16_t addr, const char *buf, int length);
 
 	void sendAndWait();
+
 };

@@ -16,8 +16,7 @@ px4_add_board(
 		TEL2:/dev/ttyS2
 		TEL4:/dev/ttyS3
 	DRIVERS
-		adc/board_adc
-		adc/ads1115
+		adc
 		barometer # all available barometer drivers
 		batt_smbus
 		camera_capture
@@ -45,7 +44,6 @@ px4_add_board(
 		optical_flow # all available optical flow drivers
 		#osd
 		pca9685
-		pca9685_pwm_out
 		power_monitor/ina226
 		#protocol_splitter
 		pwm_input
@@ -90,7 +88,6 @@ px4_add_board(
 		sensors
 		sih
 		temperature_compensation
-		uuv_att_control
 		vmount
 		vtol_att_control
 	SYSTEMCMDS
@@ -113,7 +110,6 @@ px4_add_board(
 		reboot
 		reflect
 		sd_bench
-		system_time
 		tests # tests and test runner
 		top
 		topic_listener
@@ -122,10 +118,8 @@ px4_add_board(
 		ver
 		work_queue
 	EXAMPLES
-		fake_gyro
 		fake_magnetometer
 		fixedwing_control # Tutorial code from https://px4.io/dev/example_fixedwing_control
-		gyro_fft
 		hello
 		hwtest # Hardware test
 		#matlab_csv_serial

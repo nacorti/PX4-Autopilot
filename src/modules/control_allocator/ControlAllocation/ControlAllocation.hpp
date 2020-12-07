@@ -44,11 +44,7 @@
  * [...]
  * // Initialization
  * ControlAllocationMethodImpl alloc();
-<<<<<<< HEAD
  * alloc.setEffectivenessMatrix(effectiveness, actuator_trim);
-=======
- * alloc.setEffectivenessMatrix(B);
->>>>>>> Add ControlAllocation base class
  * alloc.setActuatorMin(actuator_min);
  * alloc.setActuatorMin(actuator_max);
  *
@@ -57,12 +53,7 @@
  *
  * 	// Set control setpoint, allocate actuator setpoint, retrieve actuator setpoint
  * 	alloc.setControlSetpoint(control_sp);
- * 	alloc.allocate();
-<<<<<<< HEAD
  * 	actuator_sp = alloc.getActuatorSetpoint();
-=======
- * 	actuator_sp = alloc.getAllocatedActuator();
->>>>>>> Add ControlAllocation base class
  *
  * 	// Check if the control setpoint was fully allocated
  *	unallocated_control = control_sp - alloc.getAllocatedControl()
@@ -86,7 +77,6 @@ public:
 	ControlAllocation() = default;
 	virtual ~ControlAllocation() = default;
 
-<<<<<<< HEAD
 	static constexpr uint8_t NUM_ACTUATORS = 16;
 	static constexpr uint8_t NUM_AXES = 6;
 
@@ -100,10 +90,6 @@ public:
 		THRUST_Y,
 		THRUST_Z
 	};
-=======
-	static const uint8_t NUM_ACTUATORS = vehicle_actuator_setpoint_s::NUM_ACTUATOR_SETPOINT;
-	static const uint8_t NUM_AXES = 6;
->>>>>>> Add ControlAllocation base class
 
 	/**
 	 * Allocate control setpoint to actuators
@@ -117,23 +103,15 @@ public:
 	 *
 	 * @param B Effectiveness matrix
 	 */
-<<<<<<< HEAD
 	virtual void setEffectivenessMatrix(const matrix::Matrix<float, NUM_AXES, NUM_ACTUATORS> &effectiveness,
 					    const matrix::Vector<float, NUM_ACTUATORS> &actuator_trim);
-=======
-	virtual void setEffectivenessMatrix(const matrix::Matrix<float, NUM_AXES, NUM_ACTUATORS> &B);
->>>>>>> Add ControlAllocation base class
 
 	/**
 	 * Get the allocated actuator vector
 	 *
 	 * @return Actuator vector
 	 */
-<<<<<<< HEAD
 	const matrix::Vector<float, NUM_ACTUATORS> &getActuatorSetpoint() const;
-=======
-	const matrix::Vector<float, NUM_ACTUATORS> &getAllocatedActuator() const;
->>>>>>> Add ControlAllocation base class
 
 	/**
 	 * Set the desired control vector
@@ -207,7 +185,6 @@ public:
 	 *
 	 * The output is in the range [min; max]
 	 *
-<<<<<<< HEAD
 	 * @param actuator Actuator vector to clip
 	 *
 	 * @return Clipped actuator setpoint
@@ -234,6 +211,5 @@ protected:
 	matrix::Vector<float, NUM_ACTUATORS> _actuator_sp;  	//< Actuator setpoint
 	matrix::Vector<float, NUM_AXES> _control_sp;   		//< Control setpoint
 	matrix::Vector<float, NUM_AXES> _control_allocated;  	//< Allocated control
-<<<<<<< HEAD
 	matrix::Vector<float, NUM_AXES> _control_trim;  	//< Control at trim actuator values
 };

@@ -108,7 +108,6 @@ ControlAllocation::getActuatorMax() const
 }
 
 void
-<<<<<<< HEAD
 ControlAllocation::setActuatorSetpoint(
 	const matrix::Vector<float, ControlAllocation::NUM_ACTUATORS> &actuator_sp)
 {
@@ -131,23 +130,6 @@ ControlAllocation::clipActuatorSetpoint(const matrix::Vector<float, ControlAlloc
 	for (size_t i = 0; i < ControlAllocation::NUM_ACTUATORS; i++) {
 		if (_actuator_max(i) < _actuator_min(i)) {
 			actuator_clipped(i) = _actuator_trim(i);
-=======
-ControlAllocation::setCurrentActuatorSetpoint(const matrix::Vector<float, ControlAllocation::NUM_ACTUATORS>
-		&actuator_sp)
-{
-	_actuator_sp = actuator_sp;
-}
-
-matrix::Vector<float, ControlAllocation::NUM_ACTUATORS>
-ControlAllocation::clipActuatorSetpoint() const
-{
-	matrix::Vector<float, ControlAllocation::NUM_ACTUATORS> actuator_clipped = _actuator_sp;
-
-	for (size_t i = 0; i < ControlAllocation::NUM_ACTUATORS; i++) {
-		if (_actuator_max(i) < _actuator_min(i)) {
-			// this should not happen
-			actuator_clipped(i) = _actuator_min(i);
->>>>>>> Add ControlAllocation base class
 
 		} else if (actuator_clipped(i) < _actuator_min(i)) {
 			actuator_clipped(i) = _actuator_min(i);

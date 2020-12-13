@@ -70,9 +70,9 @@ then
 	param set CA_ACT5_MIN -0.1
 	param set CA_ACT5_MAX 1.5
 
-	param set MC_PITCHRATE_P 0.05
-	param set MC_ROLLRATE_P 0.05
-	param set MC_YAWRATE_P 0.05
+	#param set MC_PITCHRATE_P 0.05
+	#param set MC_ROLLRATE_P 0.05
+	#param set MC_YAWRATE_P 0.05
 
 fi
 #sh /etc/init.d/rc.vtol_defaults

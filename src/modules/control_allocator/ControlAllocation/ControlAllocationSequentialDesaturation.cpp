@@ -38,17 +38,27 @@
  */
 
 #include "ControlAllocationSequentialDesaturation.hpp"
+#include <drivers/drv_hrt.h>
+#include <circuit_breaker/circuit_breaker.h>
+#include <mathlib/math/Limits.hpp>
+#include <mathlib/math/Functions.hpp>
 
+using namespace matrix;
+using namespace time_literals;
 
 
 void
 ControlAllocationSequentialDesaturation::allocate()
 {
+	matrix::Matrix<float, 16, 1> delta;
 	//Compute new gains if needed
 	updatePseudoInverse();
 
 	// Allocate
-	_actuator_sp = _actuator_trim + _mix * (_control_sp - _control_trim);
+	delta = _mix * (_control_sp - _control_trim);
+	PX4_INFO("Delta: ");
+	delta.print();
+	_actuator_sp = _actuator_trim + delta;
 
 	// go through control axes from lowest to highest priority and unsaturate the actuators
 	for (unsigned i = 0; i < NUM_AXES; i++) {

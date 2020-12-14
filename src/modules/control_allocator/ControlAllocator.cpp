@@ -331,7 +331,11 @@ ControlAllocator::Run()
 		// Forward to effectiveness source
 		_actuator_effectiveness->setFlightPhase(flight_phase);
 	}
-
+	// Somewhere up here we need to update the effectiveness of motor tilt
+	/*float div = _thrust_sp(0) / (-_thrust_sp(2) + 0.001f);
+	float main_tilt = math::constrain(atanf(div), 0.0f, 0.8f);
+	_control_allocation->set_tilt_trim(main_tilt);
+	_control_allocation->set_pusher_trim(0); *///@TODO: Figure out what to set this.
 	// Guard against too small (< 0.2ms) and too large (> 20ms) dt's.
 	const hrt_abstime now = hrt_absolute_time();
 	const float dt = math::constrain(((now - _last_run) / 1e6f), 0.0002f, 0.02f);

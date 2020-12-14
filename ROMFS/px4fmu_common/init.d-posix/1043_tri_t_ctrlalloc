@@ -56,19 +56,19 @@ then
         param set CA_METHOD 1
 	param set CA_AIRFRAME 3
 
-	param set CA_ACT0_MIN 0
-	param set CA_ACT0_MAX 1
-	param set CA_ACT1_MIN 0
-	param set CA_ACT1_MAX 1
-	param set CA_ACT2_MIN 0
-	param set CA_ACT2_MAX 1
+	param set CA_ACT0_MIN 0.0
+	param set CA_ACT0_MAX 1.0
+	param set CA_ACT1_MIN 0.0
+	param set CA_ACT1_MAX 1.0
+	param set CA_ACT2_MIN 0.0
+	param set CA_ACT2_MAX 1.0
 
-	param set CA_ACT3_MIN -0.3
-	param set CA_ACT3_MAX 0.3
-	param set CA_ACT4_MIN -0.3
-	param set CA_ACT4_MAX 0.3
-	param set CA_ACT5_MIN -0.1
-	param set CA_ACT5_MAX 1.5
+	param set CA_ACT3_MIN -1.0
+	param set CA_ACT3_MAX 1.0
+	param set CA_ACT4_MIN -1.0
+	param set CA_ACT4_MAX 1.0
+	param set CA_ACT5_MIN -1.0
+	param set CA_ACT5_MAX 1.0
 
 	#param set MC_PITCHRATE_P 0.05
 	#param set MC_ROLLRATE_P 0.05

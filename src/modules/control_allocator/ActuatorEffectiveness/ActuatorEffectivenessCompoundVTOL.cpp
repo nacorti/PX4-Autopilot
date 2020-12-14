@@ -90,21 +90,27 @@ ActuatorEffectivenessCompoundVTOL::setFlightPhase(const FlightPhase &flight_phas
 	}
 
 	// Trim: half throttle, tilted motors
-	_trim(0) = 0.05f;
-	_trim(1) = 0.1f;
-	_trim(2) = 0.4f;
+	_trim(0) = 0.5f;
+	_trim(1) = 0.5f;
+	_trim(2) = 0.5f;
 	_trim(3) = tilt_main;
 	_trim(4) = tilt_main;
 	_trim(5) = tilt_pusher;
 
+	const float l_x_front = 0.06f;
+	const float l_x_rear = 0.24f;
+	const float l_y_front = 0.20f;
+	const float c_t_front = 8.f;
+	const float c_t_rear = 4.f;
+
 	// Effectiveness
 	const float compound_vtol[NUM_AXES][NUM_ACTUATORS] = {
-		{ 0.8f * cosf(_trim(3)),  -0.8f * cosf(_trim(4)),0.f, 0.8f * _trim(0) *sinf(_trim(3)), -0.8f * _trim(1) *sinf(_trim(4)),0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-		{ 0.67f * cosf(_trim(3)),   0.67f * cosf(_trim(4)), -0.33f * cosf(_trim(5)), 0.67f * _trim(0) *sinf(_trim(3)), 0.67f * _trim(1) *sinf(_trim(4)),  -0.33f * _trim(2) *sinf(_trim(5)), 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-		{ -0.67f * sinf(_trim(3)),  0.67f * sinf(_trim(4)), -0.33f * _trim(2), -0.67f * _trim(0) *cosf(_trim(3)), 0.67f * _trim(1) *cosf(_trim(4)), -0.33f * _trim(2) *cosf(_trim(5)), 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-		{ 0.67f * sinf(_trim(3)), 0.67f * sinf(_trim(4)), 0.33f * sinf(_trim(5)), 0.67f * _trim(0) *cosf(_trim(3)), 0.67f * _trim(1) *cosf(_trim(4)), 0.33f * _trim(2) *cosf(_trim(5)), 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+		{ c_t_front *l_y_front * cosf(_trim(3)), -c_t_front *l_y_front * cosf(_trim(4)),                         0.f,                             0.f,                             0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+		{ c_t_front *l_x_front * cosf(_trim(3)),  c_t_front *l_x_front * cosf(_trim(4)),  -c_t_rear *l_x_rear * 1.0f,                             0.f,                             0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+		{                                   0.f,                                    0.f,                         0.f, c_t_front *l_y_front * _trim(0),-c_t_front *l_y_front * _trim(1), 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+		{                                   0.f,                                    0.f,                         0.f,                             0.f,                             0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
 		{ 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-		{ -0.67f * cosf(_trim(3)), -0.67f * cosf(_trim(4)), -0.33f * cosf(_trim(5)), 0.67f * _trim(0) *sinf(_trim(3)), 0.67f * _trim(1) *sinf(_trim(4)), 0.33f * _trim(2) *sinf(_trim(5)), 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+		{           -c_t_front * cosf(_trim(3)),            -c_t_front * cosf(_trim(4)),                   -c_t_rear,                             0.f,                             0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
 	};
 	_effectiveness = matrix::Matrix<float, NUM_AXES, NUM_ACTUATORS>(compound_vtol);
 }

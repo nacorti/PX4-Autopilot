@@ -133,10 +133,10 @@ ControlAllocation::clipActuatorSetpoint(const matrix::Vector<float, ControlAlloc
 		if (_actuator_max(i) < _actuator_min(i)) {
 			actuator_clipped(i) = _actuator_trim(i);
 
-		} else if (actuator_clipped(i) < _actuator_min(i)) {
+		} else if (actuator(i) < _actuator_min(i)) {
 			actuator_clipped(i) = _actuator_min(i);
 
-		} else if (actuator_clipped(i) > _actuator_max(i)) {
+		} else if (actuator(i) > _actuator_max(i)) {
 			actuator_clipped(i) = _actuator_max(i);
 
 		} else {

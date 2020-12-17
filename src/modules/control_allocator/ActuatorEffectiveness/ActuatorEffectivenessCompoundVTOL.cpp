@@ -90,15 +90,15 @@ ActuatorEffectivenessCompoundVTOL::setFlightPhase(const FlightPhase &flight_phas
 	}
 
 	// Trim: half throttle, tilted motors
-	_trim(0) = 0.5f;
-	_trim(1) = 0.5f;
-	_trim(2) = 0.5f;
+	_trim(0) = 0.1f;
+	_trim(1) = 0.1f;
+	_trim(2) = 0.1f;
 	_trim(3) = tilt_main;
 	_trim(4) = tilt_main;
 	_trim(5) = tilt_pusher;
 
 	const float l_x_front = 0.06f;
-	const float l_x_rear = 0.24f;
+	const float l_x_rear = 0.01f;
 	const float l_y_front = 0.20f;
 	const float c_t_front = 8.f;
 	const float c_t_rear = 4.f;

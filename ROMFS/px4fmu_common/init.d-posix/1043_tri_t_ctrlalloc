@@ -70,17 +70,9 @@ then
 	param set CA_ACT5_MIN -1.0
 	param set CA_ACT5_MAX 1.0
 
-	#param set MC_PITCHRATE_P 0.05
-	#param set MC_ROLLRATE_P 0.05
-	#param set MC_YAWRATE_P 0.05
-
 fi
 #sh /etc/init.d/rc.vtol_defaults
 sh /etc/init.d/rc.ctrlalloc
 set MAV_TYPE 25
 
-# set MIXER_FILE etc/mixers-sitl/tiltrotor_sitl.main.mix
-#set MIXER_FILE etc/mixers-sitl/tri_t_sitl_direct.main.mix
-#set MIXER custom
 set MIXER direct
-set MIXER_AUX direct

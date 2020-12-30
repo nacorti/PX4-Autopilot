@@ -40,7 +40,7 @@
 #pragma once
 
 #include "FlightTaskManual.hpp"
-#include <lib/ecl/AlphaFilter/AlphaFilter.hpp>
+#include <lib/ecl/EKF/AlphaFilter.hpp>
 
 class FlightTaskManualAltitude : public FlightTaskManual
 {

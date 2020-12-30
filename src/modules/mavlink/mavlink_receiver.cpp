@@ -723,7 +723,7 @@ MavlinkReceiver::handle_message_distance_sensor(mavlink_message_t *msg)
 	// MAVLink DISTANCE_SENSOR signal_quality value of 0 means unset/unknown
 	// quality value. Also it comes normalised between 1 and 100 while the uORB
 	// signal quality is normalised between 0 and 100.
-	ds.signal_quality = dist_sensor.signal_quality == 0 ? -1 : 100 * (dist_sensor.signal_quality - 1) / 99;
+	//ds.signal_quality = dist_sensor.signal_quality == 0 ? -1 : 100 * (dist_sensor.signal_quality - 1) / 99;
 
 	_distance_sensor_pub.publish(ds);
 }
@@ -2317,7 +2317,7 @@ MavlinkReceiver::handle_message_cellular_status(mavlink_message_t *msg)
 
 	cellular_status.timestamp = hrt_absolute_time();
 	cellular_status.status = status.status;
-	cellular_status.failure_reason = status.failure_reason;
+	// cellular_status.failure_reason = status.failure_reason;
 	cellular_status.type = status.type;
 	cellular_status.quality = status.quality;
 	cellular_status.mcc = status.mcc;

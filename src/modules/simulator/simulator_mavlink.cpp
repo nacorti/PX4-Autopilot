@@ -1066,7 +1066,7 @@ int Simulator::publish_distance_topic(const mavlink_distance_sensor_t *dist_mavl
 	// MAVLink DISTANCE_SENSOR signal_quality value of 0 means unset/unknown
 	// quality value. Also it comes normalised between 1 and 100 while the uORB
 	// signal quality is normalised between 0 and 100.
-	dist.signal_quality = dist_mavlink->signal_quality == 0 ? -1 : 100 * (dist_mavlink->signal_quality - 1) / 99;
+	//dist.signal_quality = dist_mavlink->signal_quality == 0 ? -1 : 100 * (dist_mavlink->signal_quality - 1) / 99;
 
 	switch (dist_mavlink->orientation) {
 	case MAV_SENSOR_ORIENTATION::MAV_SENSOR_ROTATION_PITCH_270:

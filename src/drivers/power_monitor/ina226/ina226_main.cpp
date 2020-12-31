@@ -16,11 +16,11 @@ I2CSPIDriverBase *INA226::instantiate(const BusCLIArguments &cli, const BusInsta
 	}
 
 	if (cli.custom1 == 1) {
-		if (instance->force_init() != PX4_OK) {
+		if (instance->force_init() != OK) {
 			PX4_INFO("Failed to init INA226 on bus %d, but will try again periodically.", iterator.bus());
 		}
 
-	} else if (instance->init() != PX4_OK) {
+	} else if (OK != instance->init()) {
 		delete instance;
 		return nullptr;
 	}

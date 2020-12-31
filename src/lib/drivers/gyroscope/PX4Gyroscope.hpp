@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018-2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,18 +33,23 @@
 
 #pragma once
 
+#include <drivers/drv_gyro.h>
 #include <drivers/drv_hrt.h>
+#include <lib/cdev/CDev.hpp>
 #include <lib/conversion/rotation.h>
 #include <px4_platform_common/module_params.h>
+#include <uORB/PublicationMulti.hpp>
 #include <uORB/PublicationMulti.hpp>
 #include <uORB/topics/sensor_gyro.h>
 #include <uORB/topics/sensor_gyro_fifo.h>
 
-class PX4Gyroscope : public ModuleParams
+class PX4Gyroscope : public cdev::CDev, public ModuleParams
 {
 public:
 	PX4Gyroscope(uint32_t device_id, ORB_PRIO priority = ORB_PRIO_DEFAULT, enum Rotation rotation = ROTATION_NONE);
 	~PX4Gyroscope() override;
+
+	int	ioctl(cdev::file_t *filp, int cmd, unsigned long arg) override;
 
 	uint32_t get_device_id() const { return _device_id; }
 
@@ -58,22 +63,39 @@ public:
 	void set_scale(float scale) { _scale = scale; }
 	void set_temperature(float temperature) { _temperature = temperature; }
 
-	void update(const hrt_abstime &timestamp_sample, float x, float y, float z);
+	void update(hrt_abstime timestamp_sample, float x, float y, float z);
 
-	void updateFIFO(sensor_gyro_fifo_s &sample);
+	void print_status();
+
+	struct FIFOSample {
+		hrt_abstime timestamp_sample;
+		uint8_t samples; // number of samples
+		float dt; // in microseconds
+
+		int16_t x[32];
+		int16_t y[32];
+		int16_t z[32];
+	};
+	static_assert(sizeof(FIFOSample::x) == sizeof(sensor_gyro_fifo_s::x), "FIFOSample.x invalid size");
+	static_assert(sizeof(FIFOSample::y) == sizeof(sensor_gyro_fifo_s::y), "FIFOSample.y invalid size");
+	static_assert(sizeof(FIFOSample::z) == sizeof(sensor_gyro_fifo_s::z), "FIFOSample.z invalid size");
+
+	void updateFIFO(const FIFOSample &sample);
 
 private:
-	void Publish(const hrt_abstime &timestamp_sample, float x, float y, float z);
+	uORB::PublicationQueuedMulti<sensor_gyro_s>      _sensor_pub;
+	uORB::PublicationMulti<sensor_gyro_fifo_s>       _sensor_fifo_pub;
 
-	uORB::PublicationQueuedMulti<sensor_gyro_s> _sensor_pub;
-	uORB::PublicationMulti<sensor_gyro_fifo_s>  _sensor_fifo_pub;
+	matrix::Vector3f	_calibration_offset{0.f, 0.f, 0.f};
+
+	int			_class_device_instance{-1};
 
 	uint32_t		_device_id{0};
 	const enum Rotation	_rotation;
 
 	float			_range{math::radians(2000.f)};
 	float			_scale{1.f};
-	float			_temperature{NAN};
+	float			_temperature{0.f};
 
 	uint32_t		_error_count{0};
 

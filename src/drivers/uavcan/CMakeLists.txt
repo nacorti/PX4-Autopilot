@@ -43,12 +43,9 @@ if(CONFIG_ARCH_CHIP)
 	if(${CONFIG_ARCH_CHIP} MATCHES "kinetis")
 		set(UAVCAN_DRIVER "kinetis")
 		set(UAVCAN_TIMER 1)
-	elseif(${CONFIG_ARCH_CHIP} MATCHES "stm32h7")
-		set(UAVCAN_DRIVER "stm32h7")
-		set(UAVCAN_TIMER 5) # The default timer is TIM5
 	elseif(${CONFIG_ARCH_CHIP} MATCHES "stm32")
 		set(UAVCAN_DRIVER "stm32")
-		set(UAVCAN_TIMER 5) # The default timer is TIM5
+		set(UAVCAN_TIMER 5) # The default timer the 5
 	endif()
 endif()
 

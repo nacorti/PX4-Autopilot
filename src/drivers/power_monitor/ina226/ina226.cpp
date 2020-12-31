@@ -103,21 +103,22 @@ INA226::~INA226()
 	perf_free(_measure_errors);
 }
 
-int INA226::read(uint8_t address, int16_t &data)
+int INA226::read(uint8_t address)
 {
-	// read desired little-endian value via I2C
-	uint16_t received_bytes;
-	const int ret = transfer(&address, 1, (uint8_t *)&received_bytes, sizeof(received_bytes));
+	union {
+		uint16_t reg;
+		uint8_t  b[2] = {};
+	} data;
 
-	if (ret == PX4_OK) {
-		data = swap16(received_bytes);
+	int ret = transfer(&address, 1, &data.b[0], sizeof(data.b));
 
-	} else {
+	if (OK != ret) {
 		perf_count(_comms_errors);
 		PX4_DEBUG("i2c::transfer returned %d", ret);
+		return -1;
 	}
 
-	return ret;
+	return swap16(data.reg);
 }
 
 int INA226::write(uint8_t address, uint16_t value)
@@ -132,7 +133,7 @@ INA226::init()
 	int ret = PX4_ERROR;
 
 	/* do I2C init (and probe) first */
-	if (I2C::init() != PX4_OK) {
+	if (I2C::init() != OK) {
 		return ret;
 	}
 
@@ -150,13 +151,13 @@ INA226::init()
 		ret = write(INA226_REG_CONFIGURATION, _config);
 
 	} else {
-		ret = PX4_OK;
+		ret = OK;
 	}
 
 	start();
 	_sensor_ok = true;
 
-	_initialized = ret == PX4_OK;
+	_initialized = ret == OK;
 	return ret;
 }
 
@@ -173,25 +174,35 @@ INA226::force_init()
 int
 INA226::probe()
 {
-	int16_t value{0};
+	int value = read(INA226_MFG_ID);
 
-	if (read(INA226_MFG_ID, value) != PX4_OK || value != INA226_MFG_ID_TI) {
+	if (value < 0) {
+		perf_count(_comms_errors);
+	}
+
+	if (value != INA226_MFG_ID_TI) {
 		PX4_DEBUG("probe mfgid %d", value);
 		return -1;
 	}
 
-	if (read(INA226_MFG_DIEID, value) != PX4_OK || value != INA226_MFG_DIE) {
+	value = read(INA226_MFG_DIEID);
+
+	if (value < 0) {
+		perf_count(_comms_errors);
+	}
+
+	if (value != INA226_MFG_DIE) {
 		PX4_DEBUG("probe die id %d", value);
 		return -1;
 	}
 
-	return PX4_OK;
+	return OK;
 }
 
 int
 INA226::measure()
 {
-	int ret = PX4_OK;
+	int ret = OK;
 
 	if (_mode_triggered) {
 		ret = write(INA226_REG_CONFIGURATION, _config);
@@ -208,47 +219,76 @@ INA226::measure()
 int
 INA226::collect()
 {
+	int ret = -EIO;
+
+	/* read from the sensor */
 	perf_begin(_sample_perf);
+
+	if (_initialized) {
+
+		_bus_voltage = read(INA226_REG_BUSVOLTAGE);
+		_power = read(INA226_REG_POWER);
+		_current = read(INA226_REG_CURRENT);
+		_shunt = read(INA226_REG_SHUNTVOLTAGE);
+
+	} else {
+		init();
+
+		_bus_voltage = -1.0f;
+		_power = -1.0f;
+		_current = -1.0f;
+		_shunt = -1.0f;
+	}
 
 	parameter_update_s param_update;
 
 	if (_parameters_sub.copy(&param_update)) {
+		// Currently, this INA226 driver doesn't really use ModuleParams. This call to updateParams() is just to
+		// update the battery, which is registered as a child.
 		updateParams();
 	}
 
-	// read from the sensor
-	// Note: If the power module is connected backwards, then the values of _power, _current, and _shunt will be negative but otherwise valid.
-	bool success{true};
-	success = success && (read(INA226_REG_BUSVOLTAGE, _bus_voltage) == PX4_OK);
-	// success = success && (read(INA226_REG_POWER, _power) == PX4_OK);
-	success = success && (read(INA226_REG_CURRENT, _current) == PX4_OK);
-	// success = success && (read(INA226_REG_SHUNTVOLTAGE, _shunt) == PX4_OK);
+	// Note: If the power module is connected backwards, then the values of _power, _current, and _shunt will
+	//  be negative but otherwise valid. This isn't important, because why should we support the case where
+	//  the power module is used incorrectly?
+	if (_bus_voltage >= 0 && _power >= 0 && _current >= 0 && _shunt >= 0) {
 
-	if (!success) {
-		PX4_DEBUG("error reading from sensor");
-		_bus_voltage = _power = _current = _shunt = 0;
-	}
+		_actuators_sub.copy(&_actuator_controls);
 
-	_actuators_sub.copy(&_actuator_controls);
+		/* publish it */
+		_battery.updateBatteryStatus(
+			hrt_absolute_time(),
+			(float) _bus_voltage * INA226_VSCALE,
+			(float) _current * _current_lsb,
+			true,
+			battery_status_s::BATTERY_SOURCE_POWER_MODULE,
+			0,
+			_actuator_controls.control[actuator_controls_s::INDEX_THROTTLE]
+		);
 
-	_battery.updateBatteryStatus(
-		hrt_absolute_time(),
-		(float) _bus_voltage * INA226_VSCALE,
-		(float) _current * _current_lsb,
-		success,
-		battery_status_s::BATTERY_SOURCE_POWER_MODULE,
-		0,
-		_actuator_controls.control[actuator_controls_s::INDEX_THROTTLE]
-	);
-
-	perf_end(_sample_perf);
-
-	if (success) {
-		return PX4_OK;
+		ret = OK;
 
 	} else {
-		return PX4_ERROR;
+		_battery.updateBatteryStatus(
+			hrt_absolute_time(),
+			0.0,
+			0.0,
+			false,
+			battery_status_s::BATTERY_SOURCE_POWER_MODULE,
+			0,
+			0.0
+		);
+		ret = -1;
+		perf_count(_comms_errors);
 	}
+
+	if (ret != OK) {
+		PX4_DEBUG("error reading from sensor: %d", ret);
+	}
+
+	perf_count(_comms_errors);
+	perf_end(_sample_perf);
+	return ret;
 }
 
 void
@@ -270,8 +310,9 @@ INA226::RunImpl()
 {
 	if (_initialized) {
 		if (_collect_phase) {
+
 			/* perform collection */
-			if (collect() != PX4_OK) {
+			if (OK != collect()) {
 				perf_count(_collection_errors);
 				/* if error restart the measurement state machine */
 				start();
@@ -282,6 +323,7 @@ INA226::RunImpl()
 			_collect_phase = !_mode_triggered;
 
 			if (_measure_interval > INA226_CONVERSION_INTERVAL) {
+
 				/* schedule a fresh cycle call when we are ready to measure again */
 				ScheduleDelayed(_measure_interval - INA226_CONVERSION_INTERVAL);
 				return;
@@ -291,7 +333,7 @@ INA226::RunImpl()
 		/* Measurement  phase */
 
 		/* Perform measurement */
-		if (measure() != PX4_OK) {
+		if (OK != measure()) {
 			perf_count(_measure_errors);
 		}
 
@@ -312,7 +354,7 @@ INA226::RunImpl()
 			0.0f
 		);
 
-		if (init() != PX4_OK) {
+		if (init() != OK) {
 			ScheduleDelayed(INA226_INIT_RETRY_INTERVAL_US);
 		}
 	}

@@ -327,6 +327,8 @@ CM8JL65::print_info()
 {
 	perf_print_counter(_sample_perf);
 	perf_print_counter(_comms_errors);
+
+	_px4_rangefinder.print_status();
 }
 
 void

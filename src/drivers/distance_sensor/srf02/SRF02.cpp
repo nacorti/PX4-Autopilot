@@ -147,4 +147,6 @@ void SRF02::print_status()
 	I2CSPIDriverBase::print_status();
 	perf_print_counter(_sample_perf);
 	perf_print_counter(_comms_errors);
+
+	_px4_rangefinder.print_status();
 }

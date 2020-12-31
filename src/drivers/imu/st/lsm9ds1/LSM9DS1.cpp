@@ -309,4 +309,6 @@ void LSM9DS1::print_status()
 	perf_print_counter(_fifo_overflow_perf);
 	perf_print_counter(_fifo_reset_perf);
 
+	_px4_accel.print_status();
+	_px4_gyro.print_status();
 }

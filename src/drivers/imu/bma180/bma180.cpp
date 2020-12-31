@@ -431,6 +431,7 @@ void BMA180::print_status()
 {
 	I2CSPIDriverBase::print_status();
 	perf_print_counter(_sample_perf);
+	_px4_accel.print_status();
 }
 
 void BMA180::print_usage()

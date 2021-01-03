@@ -237,6 +237,10 @@ ControlAllocator::update_effectiveness_source()
 		case EffectivenessSource::TAILSITTER_VTOL:
 			tmp = new ActuatorEffectivenessTailsitterVTOL();
 			break;
+
+		case EffectivenessSource::COMPOUND_VTOL:
+                        tmp = new ActuatorEffectivenessCompoundVTOL();
+                        break;
 		}
 
 		// Replace previous source with new one
@@ -633,6 +637,10 @@ int ControlAllocator::print_status()
 	case EffectivenessSource::TAILSITTER_VTOL:
 		PX4_INFO("EffectivenessSource: TAILSITTER_VTOL");
 		break;
+	
+	case EffectivenessSource::COMPOUND_VTOL:
+                PX4_INFO("EffectivenessSource: Compound VTOL");
+                break;
 	}
 
 	// Print current effectiveness matrix

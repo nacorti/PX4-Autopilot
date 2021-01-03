@@ -52,6 +52,7 @@
  * @value 2 tiltrotor vtol
  * @value 3 plane
  * @value 4 tailsitter vtol
+ * @value 5 compount VTOL
  * @group Control Allocation
  */
 PARAM_DEFINE_INT32(CA_AIRFRAME, 0);

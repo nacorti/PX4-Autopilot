@@ -47,6 +47,7 @@
 #include <ActuatorEffectivenessTiltrotorVTOL.hpp>
 #include <ActuatorEffectivenessTailsitterVTOL.hpp>
 #include <ActuatorEffectivenessPlane.hpp>
+#include <ActuatorEffectivenessCompoundVTOL.hpp>
 
 #include <ControlAllocation.hpp>
 #include <ControlAllocationPseudoInverse.hpp>
@@ -128,7 +129,8 @@ private:
 		STANDARD_VTOL = 1,
 		TILTROTOR_VTOL = 2,
 		PLANE = 3,
-		TAILSITTER_VTOL = 4
+		TAILSITTER_VTOL = 4,
+		COMPOUND_VTOL = 5,
 	};
 
 	EffectivenessSource _effectiveness_source_id{EffectivenessSource::NONE};

@@ -135,6 +135,7 @@ px4_add_romfs_files(
 	13012_convergence
 	13013_deltaquad
 	13014_vtol_babyshark
+	13040_tri_t_ctrlalloc
 	13050_generic_vtol_octo
 	13200_generic_vtol_tailsitter
 

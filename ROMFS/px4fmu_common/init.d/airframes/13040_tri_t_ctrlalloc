@@ -3,7 +3,9 @@
 # @name VTOL Compound Helicopter5
 #
 # @type VTOL Compound Helicopter
+# @class VTOL
 #
+# @maintainer Nick Corti <nacorti@gmail.com>
 
 sh /etc/init.d/rc.vtol_defaults
 sh /etc/init.d/rc.ctrlalloc
@@ -70,10 +72,6 @@ then
 	param set CA_ACT4_MAX 0.3
 	param set CA_ACT5_MIN -0.1
 	param set CA_ACT5_MAX 1.5
-
-	param set MC_PITCHRATE_P 0.05
-	param set MC_ROLLRATE_P 0.05
-	param set MC_YAWRATE_P 0.05
 
 fi
 set MAV_TYPE 21

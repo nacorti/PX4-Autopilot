@@ -35,8 +35,8 @@ px4_add_module(
 	MAIN rover_pos_control
 	SRCS
 		RoverPositionControl.cpp
-		RoverPositionControl.hpp
 	DEPENDS
-		l1
+		git_ecl
+		ecl_l1
 		pid
 	)

@@ -1,0 +1,91 @@
+#!/bin/sh
+# @class VTOL Tiltrotor
+# @name VTOL Compound Helicopter2
+#
+# @type VTOL Compound Helicopter
+# @class VTOL
+#
+# @output MAIN1 Motor Left
+# @output MAIN2 Motor Right
+# @output MAIN3 Motor Rear
+# @output AUX1 Tilt Servo Left
+# @output AUX2 Tilt Servo Right
+# @output AUX3 Tilt Servo Rear
+# @maintainer Nick Corti <nacorti@gmail.com>
+
+sh /etc/init.d/rc.vtol_defaults
+sh /etc/init.d/rc.ctrlalloc
+
+if [ $AUTOCNF = yes ]
+then
+	param set MPC_USE_HTE 0
+	param set FW_ARSP_MODE 2
+	param set FW_AIRSPD_MAX 25
+	param set FW_AIRSPD_MIN 14
+	param set FW_AIRSPD_TRIM 16
+	param set FW_L1_PERIOD 12
+
+	param set MC_ROLLRATE_P 0.3
+
+	param set MIS_LTRMIN_ALT 10
+	param set MIS_TAKEOFF_ALT 10
+	param set MIS_YAW_TMT 10
+
+	param set MPC_ACC_HOR_MAX 2
+	param set MPC_ACC_HOR_MAX 2
+	param set MPC_THR_MIN 0.1
+	param set MPC_TKO_SPEED 1
+	param set MPC_XY_P 0.15
+	param set MPC_XY_VEL_D_ACC 0.1
+	param set MPC_XY_VEL_I_ACC 4
+	param set MPC_XY_VEL_P_ACC 1
+	param set MPC_Z_VEL_MAX_DN 1.5
+	param set MPC_Z_VEL_P_ACC 16
+
+	param set NAV_ACC_RAD 5
+	param set NAV_LOITER_RAD 80
+	param set VM_MASS 2.5
+        param set VM_INERTIA_XX .19
+	param set VM_INERTIA_XY 0
+	param set VM_INERTIA_XZ -0.0004
+        param set VM_INERTIA_YY 0.17
+	param set VM_INERTIA_YZ 0
+        param set VM_INERTIA_ZZ 0.10
+
+	param set VT_F_TRANS_DUR 5.0
+	param set VT_F_TRANS_THR 0.75
+	param set VT_FWD_THRUST_SC 1.1
+	param set VT_TILT_FW 1
+	param set VT_TILT_MC 0
+	param set VT_TILT_TRANS 0.6
+	param set VT_ELEV_MC_LOCK 0
+	param set VT_B_TRANS_DUR 8
+
+	# param set VT_TYPE 2
+	param set VT_TYPE 1
+        param set CA_METHOD 1
+	param set CA_AIRFRAME 5
+
+	param set CA_ACT0_MIN 0
+	param set CA_ACT0_MAX 1
+	param set CA_ACT1_MIN 0
+	param set CA_ACT1_MAX 1
+	param set CA_ACT2_MIN 0
+	param set CA_ACT2_MAX 1
+
+	param set CA_ACT3_MIN -0.3
+	param set CA_ACT3_MAX 0.3
+	param set CA_ACT4_MIN -0.3
+	param set CA_ACT4_MAX 0.3
+	param set CA_ACT5_MIN -0.1
+	param set CA_ACT5_MAX 1.5
+
+	param set CBRK_IO_SAFETY 22027
+	param set COM_PREARM_MODE 0
+
+fi
+
+set MIXER tri_t
+set PWM_OUT 123
+set MIXER_AUX tri_t
+set PWM_AUX_OUT 123

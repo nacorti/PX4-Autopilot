@@ -131,6 +131,8 @@ px4_add_romfs_files(
 	13010_claire
 	13012_convergence
 	13013_deltaquad
+	13030_convergence_ctrlalloc
+	13040_tri_t_ctrlalloc
 	13200_generic_vtol_tailsitter
 
 	# [14000, 14999] Tri Y

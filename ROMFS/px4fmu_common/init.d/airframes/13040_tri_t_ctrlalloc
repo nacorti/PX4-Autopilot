@@ -1,6 +1,6 @@
 #!/bin/sh
 # @class VTOL Tiltrotor
-# @name VTOL Compound Helicopter2
+# @name VTOL Compound Helicopter1
 #
 # @type VTOL Compound Helicopter
 # @class VTOL
@@ -86,6 +86,7 @@ then
 fi
 
 set MIXER tri_t
-set PWM_OUT 123
+set PWM_OUT 12345678
+
 set MIXER_AUX tri_t
-set PWM_AUX_OUT 123
+set PWM_AUX_OUT 12345678

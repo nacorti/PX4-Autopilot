@@ -32,22 +32,22 @@
  ****************************************************************************/
 
 /**
- * @file ActuatorEffectivenessStandardVTOL.hpp
+ * @file ActuatorEffectivenessCompoundVTOL.hpp
  *
- * Actuator effectiveness for standard VTOL
+ * Actuator effectiveness for Compound VTOL
  *
- * @author Julien Lecoeur <julien.lecoeur@gmail.com>
+ * @author Nick Corti <nacorti@gmail.com>
  */
 
 #pragma once
 
 #include "ActuatorEffectiveness.hpp"
 
-class ActuatorEffectivenessStandardVTOL: public ActuatorEffectiveness
+class ActuatorEffectivenessCompoundVTOL: public ActuatorEffectiveness
 {
 public:
-	ActuatorEffectivenessStandardVTOL();
-	virtual ~ActuatorEffectivenessStandardVTOL() = default;
+	ActuatorEffectivenessCompoundVTOL();
+	virtual ~ActuatorEffectivenessCompoundVTOL() = default;
 
 	/**
 	 * Update effectiveness matrix
@@ -63,7 +63,7 @@ public:
 	 */
 	void setFlightPhase(const FlightPhase &flight_phase) override;
 
-	int numActuators() const override { return 7; }
+	int numActuators() const override { return 6; }
 protected:
-	bool _updated{true};
+	bool _updated{false};
 };

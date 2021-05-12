@@ -33,7 +33,6 @@
 
 px4_add_romfs_files(
 	10016_iris
-	10017_iris_ctrlalloc
 	10018_iris_foggy_lidar
 	10020_if750a
 	10030_px4vision
@@ -67,6 +66,7 @@ px4_add_romfs_files(
 	1042_tiltrotor
 	1043_standard_vtol_drop
 	1043_standard_vtol_drop.post
+	1044_tri_t_ctrlalloc
 	1060_rover
 	1061_r1_rover
 	1062_tf-r1

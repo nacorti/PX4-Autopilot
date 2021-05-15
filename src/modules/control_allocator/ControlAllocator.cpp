@@ -172,6 +172,7 @@ ControlAllocator::update_allocation_method()
 			_param_ca_method.set((int)_allocation_method_id);
 
 		} else {
+			PX4_INFO("Control Allocation will have %d actuators", tmp->NUM_ACTUATORS);
 			// Swap allocation methods
 			delete _control_allocation;
 			_control_allocation = tmp;

@@ -66,6 +66,7 @@ ControlAllocationPseudoInverse::allocate()
 	updatePseudoInverse();
 
 	// Allocate
+	// PX4_INFO("_control_sp is %.3f - %.3f", (double) _control_sp(5), (double) _control_trim(5));
 	_actuator_sp = _actuator_trim + _mix * (_control_sp - _control_trim);
 
 	// Clip
